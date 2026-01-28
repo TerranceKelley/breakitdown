@@ -5,8 +5,18 @@ import { breakdownRequestToToon } from '~/utils/toon'
 export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   console.log('[DEBUG] /api/breakdown: Request received')
   const config = useRuntimeConfig(event)
-  console.log('[DEBUG] /api/breakdown: API key configured?', !!config.openaiApiKey)
-  console.log('[DEBUG] /api/breakdown: Model:', config.openaiModel || 'gpt-4-turbo-preview')
+  
+  // Read environment variables directly (runtime config may not pick them up correctly)
+  const useOllama = process.env.USE_OLLAMA === 'true'
+  const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
+  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
+  const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
+  
+  console.log('[DEBUG] /api/breakdown: USE_OLLAMA from env:', process.env.USE_OLLAMA)
+  console.log('[DEBUG] /api/breakdown: useOllama:', useOllama)
+  console.log('[DEBUG] /api/breakdown: API key configured?', !!openaiApiKey)
+  console.log('[DEBUG] /api/breakdown: Model:', useOllama ? ollamaModel : openaiModel)
   
   const body = await readBody(event)
   console.log('[DEBUG] /api/breakdown: Request body type:', body.idea ? 'legacy' : body.concept ? 'structured' : 'unknown')
@@ -32,9 +42,6 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
       message: 'Request must include either "idea" (string) or "concept" (object with title)'
     })
   }
-
-  // Check if using Ollama (handle both string 'true' and boolean true)
-  const useOllama = config.useOllama === true || config.useOllama === 'true' || false
   
   if (!useOllama && !openaiApiKey) {
     console.error('[DEBUG] /api/breakdown: ERROR - OpenAI API key is not configured and Ollama is not enabled')
