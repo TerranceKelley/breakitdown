@@ -16,6 +16,11 @@ services:
       - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-gpt-oss:20b}
       
+      # Local Speech Services (STT & TTS)
+      - USE_LOCAL_WHISPER=${USE_LOCAL_WHISPER:-false}
+      - WHISPER_URL=${WHISPER_URL:-http://whisper:9000}
+      - TTS_URL=${TTS_URL:-http://tts:9001}
+      
       # Node environment
       - NODE_ENV=production
       - NITRO_PORT=3000
