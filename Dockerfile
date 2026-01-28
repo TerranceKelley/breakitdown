@@ -23,12 +23,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev && npm cache clean --force
+# Install production dependencies only (skip postinstall scripts)
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-# Copy built application from builder
+# Copy built application from builder (only .output is needed for runtime)
 COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/.nuxt ./.nuxt
 
 # Expose port
 EXPOSE 3000

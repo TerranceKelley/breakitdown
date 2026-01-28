@@ -11,13 +11,15 @@ This guide explains how to deploy Breakitdown to your server using Docker.
 
 ### 1. Transfer Files to Server
 
+**Recommended location:** `~/cloudtastic/ai/breakitdown/`
+
 From your local machine, transfer the project to your server:
 
 ```bash
 # From your local machine
 rsync -avz --exclude 'node_modules' --exclude '.nuxt' --exclude '.output' \
   --exclude '.git' --exclude '.env' \
-  ./ tkelley@kloudtastic:~/breakitdown/
+  ./ tkelley@kloudtastic:~/cloudtastic/ai/breakitdown/
 ```
 
 Or use git (recommended):
@@ -25,10 +27,12 @@ Or use git (recommended):
 ```bash
 # On your server
 ssh tkelley@kloudtastic
-cd ~
+cd ~/cloudtastic/ai
 git clone https://github.com/TerranceKelley/breakitdown.git
 cd breakitdown
 ```
+
+**Note:** Breakitdown goes in `~/cloudtastic/ai/breakitdown/` to follow the Cloudtastic folder structure where AI applications live under `ai/`.
 
 ### 2. Create Environment File
 
@@ -36,7 +40,7 @@ On your server, create a `.env` file:
 
 ```bash
 # On your server
-cd ~/breakitdown
+cd ~/cloudtastic/ai/breakitdown
 cp .env.example .env
 nano .env  # or use your preferred editor
 ```
@@ -63,13 +67,13 @@ OLLAMA_MODEL=gpt-oss:20b
 
 ```bash
 # Build and start the container
-docker-compose up -d --build
+docker compose up -d --build
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop the container
-docker-compose down
+docker compose down
 ```
 
 ### 4. Access the Application
@@ -79,7 +83,7 @@ The application will be available at:
 
 ## Manual Docker Commands
 
-If you prefer not to use docker-compose:
+If you prefer not to use docker compose:
 
 ```bash
 # Build the image
@@ -107,7 +111,7 @@ If you're running Ollama on the same server, you have a few options:
 
 ### Option 1: Host Network Mode (Simplest)
 
-Modify `docker-compose.yml`:
+Modify `compose.yml` (or `docker-compose.yml`):
 
 ```yaml
 services:
@@ -120,32 +124,9 @@ services:
 
 ### Option 2: Docker Network
 
-If Ollama is in another Docker container:
+If Ollama is in another Docker container (already configured in Cloudtastic):
 
-```yaml
-services:
-  breakitdown:
-    # ... other config ...
-    networks:
-      - breakitdown-network
-    environment:
-      - OLLAMA_URL=http://ollama:11434  # Use container name
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    networks:
-      - breakitdown-network
-    volumes:
-      - ollama-data:/root/.ollama
-
-networks:
-  breakitdown-network:
-    driver: bridge
-
-volumes:
-  ollama-data:
-```
+The `docker-compose.yml` is already configured to use the `proxy` network where Ollama runs.
 
 ### Option 3: Host Gateway
 
@@ -165,33 +146,33 @@ When you push changes to GitHub:
 
 ```bash
 # On your server
-cd ~/breakitdown
+cd ~/cloudtastic/ai/breakitdown
 git pull
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ## Troubleshooting
 
 ### Check Container Status
 ```bash
-docker-compose ps
-docker-compose logs breakitdown
+docker compose ps
+docker compose logs breakitdown
 ```
 
 ### Rebuild After Changes
 ```bash
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### Access Container Shell
 ```bash
-docker-compose exec breakitdown sh
+docker compose exec breakitdown sh
 ```
 
 ### Check Environment Variables
 ```bash
-docker-compose exec breakitdown env
+docker compose exec breakitdown env
 ```
 
 ## Production Considerations
