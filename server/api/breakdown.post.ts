@@ -33,8 +33,8 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
     })
   }
 
-  // Check if using Ollama
-  const useOllama = config.useOllama || false
+  // Check if using Ollama (handle both string 'true' and boolean true)
+  const useOllama = config.useOllama === true || config.useOllama === 'true' || false
   
   if (!useOllama && !config.openaiApiKey) {
     console.error('[DEBUG] /api/breakdown: ERROR - OpenAI API key is not configured and Ollama is not enabled')

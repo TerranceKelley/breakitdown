@@ -36,8 +36,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Check if using Ollama
-  const useOllama = config.useOllama || false
+  // Check if using Ollama (handle both string 'true' and boolean true)
+  const useOllama = config.useOllama === true || config.useOllama === 'true' || false
   
   if (!useOllama && !config.openaiApiKey) {
     throw createError({
