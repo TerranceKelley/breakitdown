@@ -245,6 +245,8 @@
         @token-usage="handleTokenUsage"
       />
     </main>
+    
+    <HealthStatus />
   </div>
 </template>
 
