@@ -20,6 +20,14 @@ interface RefineConceptRequest {
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
+  
+  // Read environment variables directly (runtime config may not pick them up correctly)
+  const useOllama = process.env.USE_OLLAMA === 'true'
+  const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
+  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
+  const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
+  
   const body = await readBody<RefineConceptRequest>(event)
 
   if (!body.messages || !Array.isArray(body.messages)) {
@@ -35,11 +43,8 @@ export default defineEventHandler(async (event) => {
       message: 'Concept context is required'
     })
   }
-
-  // Check if using Ollama (handle both string 'true' and boolean true)
-  const useOllama = config.useOllama === true || config.useOllama === 'true' || false
   
-  if (!useOllama && !config.openaiApiKey) {
+  if (!useOllama && !openaiApiKey) {
     throw createError({
       statusCode: 500,
       message: 'OpenAI API key is not configured and Ollama is not enabled'
@@ -47,14 +52,12 @@ export default defineEventHandler(async (event) => {
   }
 
   // Get model from config
-  const model = useOllama 
-    ? (config.ollamaModel || 'gpt-oss:20b')
-    : (config.openaiModel || 'gpt-4o')
+  const model = useOllama ? ollamaModel : openaiModel
 
   let openai: OpenAI | null = null
   if (!useOllama) {
     openai = new OpenAI({
-      apiKey: config.openaiApiKey
+      apiKey: openaiApiKey
     })
   }
 
@@ -97,7 +100,7 @@ Return ONLY a JSON object with "title" and "description" fields. No other text.`
     let content: string
     
     if (useOllama) {
-      const ollamaUrl = config.ollamaUrl || 'http://localhost:11434'
+      console.log('[DEBUG] /api/refine-concept: Ollama URL:', ollamaUrl)
       
       const response = await $fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',

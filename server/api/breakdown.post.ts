@@ -36,7 +36,7 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   // Check if using Ollama (handle both string 'true' and boolean true)
   const useOllama = config.useOllama === true || config.useOllama === 'true' || false
   
-  if (!useOllama && !config.openaiApiKey) {
+  if (!useOllama && !openaiApiKey) {
     console.error('[DEBUG] /api/breakdown: ERROR - OpenAI API key is not configured and Ollama is not enabled')
     throw createError({
       statusCode: 500,
@@ -45,9 +45,7 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   }
 
   // Get model from config
-  const model = useOllama 
-    ? (config.ollamaModel || 'gpt-oss:20b')
-    : (config.openaiModel || 'gpt-4o')
+  const model = useOllama ? ollamaModel : openaiModel
   
   console.log('[DEBUG] /api/breakdown: Using', useOllama ? 'Ollama' : 'OpenAI')
   console.log('[DEBUG] /api/breakdown: Model:', model)
@@ -56,7 +54,7 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   if (!useOllama) {
     console.log('[DEBUG] /api/breakdown: Initializing OpenAI client')
     openai = new OpenAI({
-      apiKey: config.openaiApiKey
+      apiKey: openaiApiKey
     })
   }
   console.log('[DEBUG] /api/breakdown: Using model:', model)
@@ -86,7 +84,7 @@ Format your response as a JSON array like this:
     
     if (useOllama) {
       console.log('[DEBUG] /api/breakdown: Calling Ollama API...')
-      const ollamaUrl = config.ollamaUrl || 'http://localhost:11434'
+      console.log('[DEBUG] /api/breakdown: Ollama URL:', ollamaUrl)
       
       const response = await $fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',

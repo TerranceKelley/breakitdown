@@ -22,8 +22,18 @@ interface ChatRequest {
 export default defineEventHandler(async (event) => {
   console.log('[DEBUG] /api/chat: Request received')
   const config = useRuntimeConfig(event)
-  console.log('[DEBUG] /api/chat: API key configured?', !!config.openaiApiKey)
-  console.log('[DEBUG] /api/chat: Model:', config.openaiModel || 'gpt-4-turbo-preview')
+  
+  // Read environment variables directly (runtime config may not pick them up correctly)
+  const useOllama = process.env.USE_OLLAMA === 'true'
+  const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
+  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
+  const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
+  
+  console.log('[DEBUG] /api/chat: USE_OLLAMA from env:', process.env.USE_OLLAMA)
+  console.log('[DEBUG] /api/chat: useOllama:', useOllama)
+  console.log('[DEBUG] /api/chat: API key configured?', !!openaiApiKey)
+  console.log('[DEBUG] /api/chat: Model:', useOllama ? ollamaModel : openaiModel)
   
   const body = await readBody<ChatRequest>(event)
   console.log('[DEBUG] /api/chat: Messages count:', body.messages?.length || 0)
@@ -42,11 +52,8 @@ export default defineEventHandler(async (event) => {
       message: 'Concept context is required'
     })
   }
-
-  // Check if using Ollama (handle both string 'true' and boolean true)
-  const useOllama = config.useOllama === true || config.useOllama === 'true' || false
   
-  if (!useOllama && !config.openaiApiKey) {
+  if (!useOllama && !openaiApiKey) {
     console.error('[DEBUG] /api/chat: ERROR - OpenAI API key is not configured and Ollama is not enabled')
     throw createError({
       statusCode: 500,
@@ -55,9 +62,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Get model from config
-  const model = useOllama 
-    ? (config.ollamaModel || 'gpt-oss:20b')
-    : (config.openaiModel || 'gpt-4o')
+  const model = useOllama ? ollamaModel : openaiModel
   
   console.log('[DEBUG] /api/chat: Using', useOllama ? 'Ollama' : 'OpenAI')
   console.log('[DEBUG] /api/chat: Model:', model)
@@ -66,7 +71,7 @@ export default defineEventHandler(async (event) => {
   if (!useOllama) {
     console.log('[DEBUG] /api/chat: Initializing OpenAI client')
     openai = new OpenAI({
-      apiKey: config.openaiApiKey
+      apiKey: openaiApiKey
     })
   }
 
@@ -124,7 +129,7 @@ If this is the initial conversation, start immediately with 1 specific guiding q
     
     if (useOllama) {
       console.log('[DEBUG] /api/chat: Calling Ollama API with', messages.length, 'messages')
-      const ollamaUrl = config.ollamaUrl || 'http://localhost:11434'
+      console.log('[DEBUG] /api/chat: Ollama URL:', ollamaUrl)
       
       const response = await $fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',
