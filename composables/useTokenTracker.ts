@@ -35,9 +35,15 @@ export const useTokenTracker = () => {
 
   /**
    * Calculate cost for Whisper transcription
-   * Note: We don't have duration info from the API, so we'll estimate or skip
+   * Note: Local Whisper is free, OpenAI Whisper is priced per minute
    */
-  const calculateWhisperCost = (durationSeconds?: number): number => {
+  const calculateWhisperCost = (durationSeconds?: number, model: string = 'whisper-1'): number => {
+    // Local Whisper is free
+    if (model.includes('whisper-local') || model.includes('local')) {
+      return 0
+    }
+    
+    // OpenAI Whisper pricing
     if (!durationSeconds) return 0
     const minutes = durationSeconds / 60
     return minutes * WHISPER_PRICE_PER_MINUTE
@@ -55,7 +61,15 @@ export const useTokenTracker = () => {
     let cost = 0
     
     if (operation === 'transcribe') {
-      cost = calculateWhisperCost(whisperDurationSeconds)
+      cost = calculateWhisperCost(whisperDurationSeconds, model)
+    } else if (operation === 'synthesize') {
+      // Local TTS (Piper) is free
+      if (model.includes('piper') || model.includes('tts-local') || model.includes('local')) {
+        cost = 0
+      } else {
+        // For other TTS services, calculate based on tokens
+        cost = calculateGPTCost(usage.prompt_tokens, usage.completion_tokens, model)
+      }
     } else {
       cost = calculateGPTCost(usage.prompt_tokens, usage.completion_tokens, model)
     }

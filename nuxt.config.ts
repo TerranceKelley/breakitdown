@@ -14,6 +14,9 @@ export default defineNuxtConfig({
     useOllama: process.env.USE_OLLAMA || 'false', // Use Ollama instead of OpenAI (read as string, convert in handlers)
     ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434', // Ollama API URL
     ollamaModel: process.env.OLLAMA_MODEL || 'gpt-oss:20b', // Ollama model name
+    whisperUrl: process.env.WHISPER_URL || 'http://localhost:9000', // Local Whisper API URL
+    useLocalWhisper: process.env.USE_LOCAL_WHISPER || 'false', // Use local Whisper instead of OpenAI
+    ttsUrl: process.env.TTS_URL || 'http://localhost:9001', // Local TTS API URL
     public: {
       appName: 'Breakitdown'
     }
