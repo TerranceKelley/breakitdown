@@ -21,6 +21,9 @@ RUN rm -rf node_modules/authme && cp -r /workspace/authme node_modules/authme
 # Copy breakitdown source (exclude node_modules via context .dockerignore)
 COPY breakitdown ./
 
+# Ensure authme is in node_modules (in case COPY overwrote it; .dockerignore should prevent that)
+RUN rm -rf node_modules/authme && cp -r /workspace/authme node_modules/authme
+
 # Build the application
 RUN npm run build
 
