@@ -6,33 +6,48 @@ This guide explains how to deploy Breakitdown to your server using Docker.
 
 - Docker and Docker Compose installed on your server
 - SSH access to your server (`tkelley@kloudtastic`)
+- **authme** as a sibling of breakitdown locally (`../authme`) so the build can include it
 
-## Quick Start
+## Deploy with deploy.sh (recommended)
 
-### 1. Transfer Files to Server
-
-**Recommended location:** `~/cloudtastic/ai/breakitdown/`
-
-From your local machine, transfer the project to your server:
+From your **local machine** (inside the breakitdown repo, with authme at `../authme`):
 
 ```bash
-# From your local machine
-rsync -avz --exclude 'node_modules' --exclude '.nuxt' --exclude '.output' \
-  --exclude '.git' --exclude '.env' \
-  ./ tkelley@kloudtastic:~/cloudtastic/ai/breakitdown/
+./deploy.sh
+# Or: ./deploy.sh tkelley@kloudtastic
 ```
 
-Or use git (recommended):
+This will:
+
+1. Push breakitdown to GitHub
+2. Create `~/cloudtastic/ai` on the server and sync **authme** from `../authme` via rsync
+3. Clone or pull **breakitdown** to `~/cloudtastic/ai/breakitdown`
+4. Run `docker compose up -d --build` from `~/cloudtastic/ai/breakitdown` (build context is parent so authme is included)
+
+**Server layout after deploy:** `~/cloudtastic/ai/breakitdown/` and `~/cloudtastic/ai/authme/`
+
+If you don’t have authme locally, copy it to the server first:
 
 ```bash
-# On your server
-ssh tkelley@kloudtastic
+rsync -avz ../authme/ tkelley@kloudtastic:~/cloudtastic/ai/authme/
+```
+
+Then run `./deploy.sh` (or run the docker compose steps on the server manually).
+
+## Manual deploy
+
+### 1. Transfer breakitdown and authme to server
+
+**Location:** `~/cloudtastic/ai/` with subdirs `breakitdown/` and `authme/`.
+
+```bash
+# On server
+mkdir -p ~/cloudtastic/ai
 cd ~/cloudtastic/ai
-git clone https://github.com/TerranceKelley/breakitdown.git
-cd breakitdown
+git clone https://github.com/TerranceKelley/breakitdown.git breakitdown
+# Then copy authme (from your machine):
+# rsync -avz ../authme/ tkelley@kloudtastic:~/cloudtastic/ai/authme/
 ```
-
-**Note:** Breakitdown goes in `~/cloudtastic/ai/breakitdown/` to follow the Cloudtastic folder structure where AI applications live under `ai/`.
 
 ### 2. Create Environment File
 

@@ -1,8 +1,10 @@
+# Build context must be the parent directory containing both breakitdown/ and authme/.
+# Run from this directory (breakitdown): docker compose up -d --build
 services:
   breakitdown:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: breakitdown/Dockerfile
     container_name: breakitdown
     ports:
       - "3000:3000"
@@ -21,15 +23,23 @@ services:
       - WHISPER_URL=${WHISPER_URL:-http://whisper:9000}
       - TTS_URL=${TTS_URL:-http://tts:9001}
       
+      # Auth (authme) - optional; when behind Caddy/Authelia, Remote-User is set by proxy
+      - DEV_USER=${DEV_USER:-}
+      - DEV_EMAIL=${DEV_EMAIL:-}
+      - DEV_NAME=${DEV_NAME:-}
       # Node environment
       - NODE_ENV=production
       - NITRO_PORT=3000
       - NITRO_HOST=0.0.0.0
     restart: unless-stopped
+    volumes:
+      - breakitdown-data:/app/data  # Per-user ideas (server/store)
     networks:
       - proxy  # Connect to Ollama's network (same network used by Cloudtastic services)
 
+volumes:
+  breakitdown-data:
+
 networks:
-  # Connect to the existing 'proxy' network used by Ollama and other Cloudtastic services
   proxy:
     external: true
