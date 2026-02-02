@@ -10,6 +10,9 @@ WORKDIR /workspace
 COPY authme ./authme
 COPY breakitdown/package*.json ./breakitdown/
 
+# Build authme so Node can load dist/module.js (main) instead of .ts
+WORKDIR /workspace/authme
+RUN npm install && npm run build
 WORKDIR /workspace/breakitdown
 
 # Install deps (authme will fail to resolve from lockfile in Docker; we'll add it next)
