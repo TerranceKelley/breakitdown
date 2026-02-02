@@ -12,11 +12,11 @@ COPY authme ./authme
 # Copy breakitdown package files first for better layer caching
 COPY breakitdown/package*.json ./breakitdown/
 
-# Install dependencies (authme is at ../authme from breakitdown's perspective)
+# Install dependencies (npm install so file:../authme resolves in this context; npm ci can use lockfile paths that break in Docker)
 WORKDIR /workspace/breakitdown
-RUN npm ci
+RUN npm install
 
-# Copy breakitdown source
+# Copy breakitdown source (after install so authme link is correct)
 COPY breakitdown ./
 
 # Build the application
