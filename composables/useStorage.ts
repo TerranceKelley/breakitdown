@@ -32,14 +32,16 @@ const getDB = async (): Promise<IDBPDatabase> => {
   return db
 }
 
-/** When user is present, use server API; otherwise IndexedDB. */
+/** When user is present, use server API; otherwise IndexedDB. Never use IndexedDB during SSR (no window). */
 function useStorageBackend() {
   const { user } = useUser()
+  const isClient = typeof window !== 'undefined'
   return {
     async getAllIdeasFromBackend(): Promise<Idea[]> {
       if (user.value) {
         return $fetch<Idea[]>('/api/ideas')
       }
+      if (!isClient) return []
       const database = await getDB()
       const result = await database.getAll(STORE_NAME)
       return result
@@ -52,6 +54,7 @@ function useStorageBackend() {
           return undefined
         }
       }
+      if (!isClient) return undefined
       const database = await getDB()
       return database.get(STORE_NAME, id)
     },
@@ -67,6 +70,7 @@ function useStorageBackend() {
         })
         return
       }
+      if (!isClient) return
       const database = await getDB()
       const ideaCopy: Idea = {
         id: idea.id,
@@ -84,6 +88,7 @@ function useStorageBackend() {
         await $fetch(`/api/ideas/${id}`, { method: 'DELETE' })
         return
       }
+      if (!isClient) return
       const database = await getDB()
       const tx = database.transaction(STORE_NAME, 'readwrite')
       await tx.objectStore(STORE_NAME).delete(id)
