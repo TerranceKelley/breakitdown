@@ -1,12 +1,30 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import esbuild from 'rollup-plugin-esbuild'
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
+  build: {
+    transpile: ['authme']
+  },
   modules: [
     'authme',
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt'
   ],
+  hooks: {
+    'nitro:build:before'(nitro) {
+      const plugins = nitro.options.rollupConfig?.plugins ?? []
+      nitro.options.rollupConfig = nitro.options.rollupConfig ?? {}
+      nitro.options.rollupConfig.plugins = [
+        ...(Array.isArray(plugins) ? plugins : [plugins]),
+        esbuild({
+          include: /node_modules\/authme\/.*\.ts$/,
+          exclude: []
+        })
+      ]
+    }
+  },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     // These are read from environment variables at runtime
