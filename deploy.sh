@@ -1,85 +1,46 @@
 #!/bin/bash
-
-# Deploy Breakitdown (and authme) to server.
-# Requires: breakitdown and authme as siblings locally (authme at ../authme).
-# Usage: ./deploy.sh [server_user@server_host]
+#
+# Deploy Breakitdown (and authme) to Kloudtastic via SSH.
+#
+# 1. Pushes breakitdown and authme to GitHub from this machine.
+# 2. SSHs to tkelley@kloudtastic and runs deploy-on-server.sh:
+#    - Ensures ~/cloudtastic/ai/breakitdown and ~/cloudtastic/ai/authme exist (clone/pull from GitHub).
+#    - Runs docker compose up -d --build from breakitdown (build context = parent so authme is included).
+#
+# Run from breakitdown repo root. If authme is at ../authme, it will be pushed to GitHub too.
+# Usage: ./deploy.sh [server]   e.g. ./deploy.sh tkelley@kloudtastic
 
 set -e
 
 SERVER="${1:-tkelley@kloudtastic}"
-PARENT_DIR="~/cloudtastic/ai"
-BREAKITDOWN_DIR="${PARENT_DIR}/breakitdown"
-AUTHME_DIR="${PARENT_DIR}/authme"
+BREAKITDOWN_REPO='https://github.com/TerranceKelley/breakitdown.git'
+AUTHME_REPO='https://github.com/TerranceKelley/authme.git'
 
-echo "🚀 Deploying Breakitdown to $SERVER"
+echo "🚀 Deploying to $SERVER"
 
 if [ ! -d .git ]; then
-    echo "❌ Error: Not in a git repository"
+    echo "❌ Error: Run from breakitdown repo root"
     exit 1
 fi
 
 if ! git remote get-url origin &>/dev/null; then
-    echo "❌ Error: No git remote 'origin' found"
+    echo "❌ Error: No git remote 'origin'"
     exit 1
 fi
 
 echo "📤 Pushing breakitdown to GitHub..."
-git push origin main || {
-    echo "⚠️  Warning: Failed to push. Continuing anyway..."
-}
+git push origin main || { echo "⚠️  Push breakitdown failed"; exit 1; }
 
-# Ensure parent dir exists on server, then sync authme
-ssh $SERVER "mkdir -p $PARENT_DIR"
-
-if [ -d ../authme ]; then
-    echo "📤 Syncing authme to server..."
-    rsync -avz --delete ../authme/ "$SERVER:${PARENT_DIR}/authme/" || true
+if [ -d ../authme/.git ]; then
+    echo "📤 Pushing authme to GitHub..."
+    (cd ../authme && git push origin main) || { echo "⚠️  Push authme failed"; exit 1; }
 else
-    echo "⚠️  ../authme not found. Server must have authme at ${PARENT_DIR}/authme."
+    echo "ℹ️  ../authme not found or not a git repo; server will use authme from GitHub."
 fi
 
-echo "🔌 Connecting to server..."
-ssh $SERVER bash -s "$PARENT_DIR" "$BREAKITDOWN_DIR" "$AUTHME_DIR" << 'ENDSSH'
-    set -e
-    PARENT_DIR="$1"
-    BREAKITDOWN_DIR="$2"
-    AUTHME_DIR="$3"
-
-    mkdir -p "$PARENT_DIR"
-    cd "$PARENT_DIR"
-
-    # Clone or pull breakitdown
-    if [ ! -d breakitdown ]; then
-        echo "📥 Cloning breakitdown..."
-        git clone https://github.com/TerranceKelley/breakitdown.git breakitdown || exit 1
-    else
-        echo "📥 Pulling breakitdown..."
-        (cd breakitdown && git pull origin main) || true
-    fi
-
-    if [ ! -f authme/package.json ]; then
-        echo "⚠️  authme not found at $AUTHME_DIR (no authme/package.json)"
-        echo "   From your machine run: rsync -avz ../authme/ $SERVER:$AUTHME_DIR/"
-        exit 1
-    fi
-
-    cd breakitdown
-
-    if [ ! -f .env ]; then
-        echo "⚠️  .env not found. Copy from .env.example and configure."
-        cp -n .env.example .env 2>/dev/null || true
-    fi
-
-    echo "🐳 Building and starting containers (context = parent so authme is included)..."
-    docker compose down 2>/dev/null || true
-    docker compose up -d --build
-
-    echo "✅ Deployment complete!"
-    docker compose ps
-    echo ""
-    echo "📝 Logs: docker compose logs -f"
-ENDSSH
+echo "🔌 Running deploy on server (clone/pull breakitdown + authme, then docker compose)..."
+# Use single quotes so ~ expands on the server to the server user's home
+ssh "$SERVER" 'mkdir -p ~/cloudtastic/ai && cd ~/cloudtastic/ai && (test -d breakitdown || git clone https://github.com/TerranceKelley/breakitdown.git breakitdown) && cd breakitdown && git pull origin main && bash deploy-on-server.sh'
 
 echo ""
-echo "✅ Done. If authme was missing on server, sync it first:"
-echo "   rsync -avz ../authme/ $SERVER:$AUTHME_DIR/"
+echo "✅ Deploy finished."

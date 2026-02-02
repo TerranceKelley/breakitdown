@@ -6,21 +6,20 @@ FROM node:20-alpine AS builder
 
 WORKDIR /workspace
 
-# Copy authme (sibling of breakitdown) so file:../authme resolves
+# Copy authme and breakitdown
 COPY authme ./authme
-
-# Copy breakitdown package files first for better layer caching
 COPY breakitdown/package*.json ./breakitdown/
 
-# Install dependencies (authme is at ../authme from breakitdown's perspective)
 WORKDIR /workspace/breakitdown
-RUN npm ci
 
-# Copy breakitdown source (context .dockerignore must exclude breakitdown/node_modules)
+# Install deps (authme will fail to resolve from lockfile in Docker; we'll add it next)
+RUN npm ci --ignore-scripts || true
+
+# Put authme in node_modules so Nuxt can load it (file:../authme often breaks in Docker)
+RUN rm -rf node_modules/authme && cp -r /workspace/authme node_modules/authme
+
+# Copy breakitdown source (exclude node_modules via context .dockerignore)
 COPY breakitdown ./
-
-# Re-link authme (file:../authme) in case COPY or lockfile broke it
-RUN npm install
 
 # Build the application
 RUN npm run build
