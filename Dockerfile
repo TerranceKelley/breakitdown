@@ -6,9 +6,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /workspace
 
-# Copy authme and breakitdown
-COPY authme ./authme
+# Copy authme explicitly (package files + src) so tsc always has inputs
+COPY authme/package.json authme/package-lock.json authme/tsconfig.json ./authme/
+COPY authme/src ./authme/src
 COPY breakitdown/package*.json ./breakitdown/
+
+# Fail fast if authme source is missing (e.g. bad clone on server)
+RUN test -f /workspace/authme/src/module.ts || (echo "Missing authme/src - listing /workspace/authme:" && ls -la /workspace/authme && (ls -la /workspace/authme/src 2>/dev/null || true) && exit 1)
 
 # Build authme to dist/ if not already (host may have pre-built; Node 20 in image)
 RUN test -d /workspace/authme/dist || (cd /workspace/authme && npm install && npm run build)

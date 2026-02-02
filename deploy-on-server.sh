@@ -24,7 +24,12 @@ if [ ! -f authme/package.json ]; then
     git clone "$AUTHME_REPO" authme || exit 1
 else
     echo "📥 Pulling authme..."
-    (cd authme && git pull origin main) || true
+    (cd authme && git fetch origin && git checkout main && git reset --hard origin/main) || true
+fi
+# Ensure authme has src/ (needed for tsc in Docker)
+if [ ! -f authme/src/module.ts ]; then
+    echo "❌ authme/src/module.ts missing; re-cloning authme..."
+    rm -rf authme && git clone "$AUTHME_REPO" authme || exit 1
 fi
 
 # Optionally package authme on host (Node 20+); if it fails, Dockerfile will build inside image
@@ -41,7 +46,7 @@ if [ ! -f .env ]; then
     cp -n .env.example .env 2>/dev/null || true
 fi
 
-# Build context is parent (ai/); exclude node_modules so COPY breakitdown doesn't overwrite container's node_modules (with authme)
+# Build context is parent (ai/). Do NOT exclude authme/src - Dockerfile COPY authme/src needs it.
 echo "breakitdown/node_modules
 authme/node_modules
 breakitdown/.nuxt
