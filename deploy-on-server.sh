@@ -27,9 +27,12 @@ else
     (cd authme && git pull origin main) || true
 fi
 
-# Package authme first so Nuxt can load dist/module.js (Docker only copies, no tsc inside image)
-echo "📦 Building authme (dist/)..."
-(cd authme && npm install && npm run build) || exit 1
+# Optionally package authme on host (Node 20+); if it fails, Dockerfile will build inside image
+if (cd authme && npm run build 2>/dev/null); then
+    echo "📦 Built authme (dist/) on host"
+else
+    echo "📦 Skipping host authme build (Docker will build authme inside image)"
+fi
 
 cd breakitdown
 

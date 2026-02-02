@@ -6,9 +6,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /workspace
 
-# Copy authme (pre-built dist/ from deploy-on-server.sh) and breakitdown
+# Copy authme and breakitdown
 COPY authme ./authme
 COPY breakitdown/package*.json ./breakitdown/
+
+# Build authme to dist/ if not already (host may have pre-built; Node 20 in image)
+RUN test -d /workspace/authme/dist || (cd /workspace/authme && npm install && npm run build)
 
 WORKDIR /workspace/breakitdown
 
