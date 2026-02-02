@@ -31,6 +31,9 @@ COPY breakitdown ./
 # Ensure authme is in node_modules (in case COPY overwrote it; .dockerignore should prevent that)
 RUN rm -rf node_modules/authme && cp -r /workspace/authme node_modules/authme
 
+# Use host app's Nuxt (breakitdown) so authme composables resolve nuxt/app correctly; avoid authme's nested nuxt
+RUN rm -rf node_modules/authme/node_modules
+
 # Build the application
 RUN npm run build
 
