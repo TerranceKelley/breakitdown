@@ -16,8 +16,11 @@ COPY breakitdown/package*.json ./breakitdown/
 WORKDIR /workspace/breakitdown
 RUN npm ci
 
-# Copy breakitdown source (context .dockerignore must exclude breakitdown/node_modules so we keep npm ci's node_modules)
+# Copy breakitdown source (context .dockerignore must exclude breakitdown/node_modules)
 COPY breakitdown ./
+
+# Re-link authme (file:../authme) in case COPY or lockfile broke it
+RUN npm install
 
 # Build the application
 RUN npm run build
