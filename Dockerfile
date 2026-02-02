@@ -6,13 +6,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /workspace
 
-# Copy authme and breakitdown
+# Copy authme (pre-built dist/ from deploy-on-server.sh) and breakitdown
 COPY authme ./authme
 COPY breakitdown/package*.json ./breakitdown/
 
-# Build authme so Node can load dist/module.js (main) instead of .ts
-WORKDIR /workspace/authme
-RUN npm install && npm run build
 WORKDIR /workspace/breakitdown
 
 # Install deps (authme will fail to resolve from lockfile in Docker; we'll add it next)

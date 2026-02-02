@@ -27,6 +27,10 @@ else
     (cd authme && git pull origin main) || true
 fi
 
+# Package authme first so Nuxt can load dist/module.js (Docker only copies, no tsc inside image)
+echo "📦 Building authme (dist/)..."
+(cd authme && npm install && npm run build) || exit 1
+
 cd breakitdown
 
 if [ ! -f .env ]; then
