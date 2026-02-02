@@ -34,6 +34,13 @@ if [ ! -f .env ]; then
     cp -n .env.example .env 2>/dev/null || true
 fi
 
+# Build context is parent (ai/); exclude node_modules so COPY breakitdown doesn't overwrite container's node_modules (with authme)
+echo "breakitdown/node_modules
+authme/node_modules
+breakitdown/.nuxt
+breakitdown/.output
+authme/.git" > "$PARENT_DIR/.dockerignore"
+
 echo "🐳 Building and starting containers..."
 docker compose down 2>/dev/null || true
 docker compose up -d --build
