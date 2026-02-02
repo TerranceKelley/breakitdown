@@ -34,6 +34,7 @@
     "vitest": "^3.2.0"
   },
   "dependencies": {
+    "authme": "file:../authme",
     "idb": "^8.0.0",
     "openai": "^4.24.0",
     "pinia": "^2.1.7",

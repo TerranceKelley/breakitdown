@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from 'idb'
-import type { Idea, Concept } from '~/types'
+import type { Idea } from '~/types'
 
 const DB_NAME = 'breakitdown-db'
 const DB_VERSION = 2 // Increment version to trigger migration
@@ -30,6 +30,66 @@ const getDB = async (): Promise<IDBPDatabase> => {
   await migrateOldProjectsStore(db)
 
   return db
+}
+
+/** When user is present, use server API; otherwise IndexedDB. */
+function useStorageBackend() {
+  const { user } = useUser()
+  return {
+    async getAllIdeasFromBackend(): Promise<Idea[]> {
+      if (user.value) {
+        return $fetch<Idea[]>('/api/ideas')
+      }
+      const database = await getDB()
+      const result = await database.getAll(STORE_NAME)
+      return result
+    },
+    async getIdeaFromBackend(id: string): Promise<Idea | undefined> {
+      if (user.value) {
+        try {
+          return await $fetch<Idea>(`/api/ideas/${id}`)
+        } catch {
+          return undefined
+        }
+      }
+      const database = await getDB()
+      return database.get(STORE_NAME, id)
+    },
+    async saveIdeaToBackend(idea: Idea): Promise<void> {
+      if (user.value) {
+        await $fetch('/api/ideas', {
+          method: 'POST',
+          body: {
+            ...idea,
+            concepts: JSON.parse(JSON.stringify(idea.concepts)),
+            tokenUsage: idea.tokenUsage ? JSON.parse(JSON.stringify(idea.tokenUsage)) : []
+          }
+        })
+        return
+      }
+      const database = await getDB()
+      const ideaCopy: Idea = {
+        id: idea.id,
+        name: idea.name,
+        rootIdea: idea.rootIdea,
+        concepts: JSON.parse(JSON.stringify(idea.concepts)),
+        createdAt: idea.createdAt,
+        updatedAt: Date.now(),
+        tokenUsage: idea.tokenUsage ? JSON.parse(JSON.stringify(idea.tokenUsage)) : []
+      }
+      await database.put(STORE_NAME, ideaCopy)
+    },
+    async deleteIdeaFromBackend(id: string): Promise<void> {
+      if (user.value) {
+        await $fetch(`/api/ideas/${id}`, { method: 'DELETE' })
+        return
+      }
+      const database = await getDB()
+      const tx = database.transaction(STORE_NAME, 'readwrite')
+      await tx.objectStore(STORE_NAME).delete(id)
+      await tx.done
+    }
+  }
 }
 
 // Force a fresh database connection (useful for debugging)
@@ -81,70 +141,22 @@ const migrateOldProjectsStore = async (database: IDBPDatabase) => {
 }
 
 export const useStorage = () => {
+  const backend = useStorageBackend()
+
   const saveIdea = async (idea: Idea): Promise<void> => {
-    const database = await getDB()
-    // Create a plain object copy to avoid Vue reactive proxy issues with IndexedDB
-    const ideaCopy: Idea = {
-      id: idea.id,
-      name: idea.name,
-      rootIdea: idea.rootIdea,
-      concepts: JSON.parse(JSON.stringify(idea.concepts)), // Deep clone to remove reactivity
-      createdAt: idea.createdAt,
-      updatedAt: Date.now(),
-      tokenUsage: idea.tokenUsage ? JSON.parse(JSON.stringify(idea.tokenUsage)) : []
-    }
-    await database.put(STORE_NAME, ideaCopy)
+    await backend.saveIdeaToBackend(idea)
   }
 
   const getIdea = async (id: string): Promise<Idea | undefined> => {
-    const database = await getDB()
-    return database.get(STORE_NAME, id)
+    return backend.getIdeaFromBackend(id)
   }
 
   const getAllIdeas = async (): Promise<Idea[]> => {
-    const database = await getDB()
-    console.log('[DEBUG] Storage getAllIdeas: Fetching all ideas')
-    
-    // Always return from the new 'ideas' store, not the old 'projects' store
-    // Migration should have already happened, so we only read from 'ideas'
-    const result = await database.getAll(STORE_NAME)
-    console.log('[DEBUG] Storage getAllIdeas: Returning', result.length, 'ideas from', STORE_NAME)
-    console.log('[DEBUG] Storage getAllIdeas: Idea IDs:', result.map(i => ({ id: i.id, name: i.name })))
-    return result
+    return backend.getAllIdeasFromBackend()
   }
 
   const deleteIdea = async (id: string): Promise<void> => {
-    const database = await getDB()
-    console.log('[DEBUG] Storage deleteIdea: Deleting id', id)
-    console.log('[DEBUG] Storage deleteIdea: Store name:', STORE_NAME)
-    
-    // Check what's in the store before delete
-    const beforeDelete = await database.getAll(STORE_NAME)
-    console.log('[DEBUG] Storage deleteIdea: Ideas before delete:', beforeDelete.map(i => ({ id: i.id, name: i.name })))
-    
-    // Perform the delete
-    const tx = database.transaction(STORE_NAME, 'readwrite')
-    const deleteResult = await tx.objectStore(STORE_NAME).delete(id)
-    await tx.done
-    console.log('[DEBUG] Storage deleteIdea: Delete transaction completed, result:', deleteResult)
-    
-    // Verify deletion immediately after
-    const verify = await database.get(STORE_NAME, id)
-    if (verify) {
-      console.error('[DEBUG] Storage deleteIdea: WARNING - Idea still exists after delete!', verify)
-    } else {
-      console.log('[DEBUG] Storage deleteIdea: Verified - Idea successfully deleted')
-    }
-    
-    // Check what's in the store after delete
-    const afterDelete = await database.getAll(STORE_NAME)
-    console.log('[DEBUG] Storage deleteIdea: Ideas after delete:', afterDelete.map(i => ({ id: i.id, name: i.name })))
-    
-    // Also check old store if it exists
-    if (database.objectStoreNames.contains(OLD_STORE_NAME)) {
-      const oldStoreData = await database.getAll(OLD_STORE_NAME)
-      console.log('[DEBUG] Storage deleteIdea: Old store still has', oldStoreData.length, 'items')
-    }
+    await backend.deleteIdeaFromBackend(id)
   }
 
   const exportIdea = (idea: Idea): string => {

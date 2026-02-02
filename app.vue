@@ -7,6 +7,20 @@
           <p class="text-muted-foreground">Break down your ideas into actionable concepts</p>
         </div>
         <div class="flex items-center gap-2">
+          <div v-if="!userState.loading" class="text-sm text-muted-foreground">
+            <template v-if="userState.user">
+              Logged in as {{ userState.user.displayName || userState.user.username }}
+            </template>
+            <a
+              v-else
+              href="https://auth.kloudtastic.com/"
+              target="_blank"
+              rel="noopener"
+              class="text-primary hover:underline"
+            >
+              Not logged in — sign in
+            </a>
+          </div>
           <button
             v-if="store.currentIdea"
             @click="goHome"
@@ -254,6 +268,7 @@
 const store = useIdeaStore()
 const ai = useAI()
 const tracker = useTokenTracker()
+const userState = useUser()
 
 const ideaName = ref('')
 const idea = ref('')
@@ -278,9 +293,16 @@ const isButtonDisabled = computed(() => {
   return disabled
 })
 
-onMounted(async () => {
-  await store.loadIdeas()
-})
+// Load ideas once we know auth state (user present → server API, else IndexedDB)
+watch(
+  () => userState.loading,
+  (loading) => {
+    if (!loading) {
+      store.loadIdeas()
+    }
+  },
+  { immediate: true }
+)
 
 const handleInitialBreakdown = async () => {
   if (!idea.value.trim() || !ideaName.value.trim()) {
