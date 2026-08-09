@@ -69,6 +69,14 @@ OPENAI_MODEL=gpt-4o
 USE_OLLAMA=false
 ```
 
+**Option A2: Using an OpenAI-compatible endpoint (self-hosted / vLLM / litellm)**
+```env
+# Example:
+OPENAI_BASE_URL=http://host.docker.internal:8000/v1
+OPENAI_MODEL=gpt-4o-mini
+USE_OLLAMA=false
+```
+
 **Option B: Using Ollama (Local)**
 ```env
 USE_OLLAMA=true
@@ -76,6 +84,11 @@ OLLAMA_URL=http://ollama:11434  # If Ollama is in another container
 # OR
 OLLAMA_URL=http://host.docker.internal:11434  # If Ollama is on host
 OLLAMA_MODEL=gpt-oss:20b
+```
+
+**Option C: Mock (no network; great for demos)**
+```env
+USE_MOCK_LLM=true
 ```
 
 ### 3. Build and Run with Docker Compose

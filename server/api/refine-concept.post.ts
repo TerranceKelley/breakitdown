@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
   const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
   
   const body = await readBody<RefineConceptRequest>(event)
@@ -44,7 +45,15 @@ export default defineEventHandler(async (event) => {
     })
   }
   
-  if (!useOllama && !openaiApiKey) {
+  const useMockLlm = process.env.USE_MOCK_LLM === 'true'
+  if (useMockLlm) {
+    return {
+      title: body.conceptContext.concept.title.trim(),
+      description: `${body.conceptContext.concept.description.trim()} (Refined: add one concrete example, constraints, and success criteria.)`
+    }
+  }
+
+  if (!useOllama && !openaiApiKey && !openaiBaseUrl) {
     throw createError({
       statusCode: 500,
       message: 'OpenAI API key is not configured and Ollama is not enabled'
@@ -57,7 +66,8 @@ export default defineEventHandler(async (event) => {
   let openai: OpenAI | null = null
   if (!useOllama) {
     openai = new OpenAI({
-      apiKey: openaiApiKey
+      apiKey: openaiApiKey || 'local-dev',
+      baseURL: openaiBaseUrl || undefined
     })
   }
 
@@ -199,4 +209,3 @@ Return ONLY a JSON object with "title" and "description" fields. No other text.`
     })
   }
 })
-

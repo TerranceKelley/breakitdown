@@ -28,11 +28,13 @@ export default defineEventHandler(async (event) => {
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
   const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
   
   console.log('[DEBUG] /api/chat: USE_OLLAMA from env:', process.env.USE_OLLAMA)
   console.log('[DEBUG] /api/chat: useOllama:', useOllama)
   console.log('[DEBUG] /api/chat: API key configured?', !!openaiApiKey)
+  console.log('[DEBUG] /api/chat: Base URL configured?', !!openaiBaseUrl)
   console.log('[DEBUG] /api/chat: Model:', useOllama ? ollamaModel : openaiModel)
   
   const body = await readBody<ChatRequest>(event)
@@ -53,7 +55,16 @@ export default defineEventHandler(async (event) => {
     })
   }
   
-  if (!useOllama && !openaiApiKey) {
+  const useMockLlm = process.env.USE_MOCK_LLM === 'true'
+
+  if (useMockLlm) {
+    return {
+      message: `Mock response: What is the single most important outcome for "${body.conceptContext.concept.title}"?`,
+      usage: undefined
+    }
+  }
+
+  if (!useOllama && !openaiApiKey && !openaiBaseUrl) {
     console.error('[DEBUG] /api/chat: ERROR - OpenAI API key is not configured and Ollama is not enabled')
     throw createError({
       statusCode: 500,
@@ -71,7 +82,8 @@ export default defineEventHandler(async (event) => {
   if (!useOllama) {
     console.log('[DEBUG] /api/chat: Initializing OpenAI client')
     openai = new OpenAI({
-      apiKey: openaiApiKey
+      apiKey: openaiApiKey || 'local-dev',
+      baseURL: openaiBaseUrl || undefined
     })
   }
 
@@ -218,4 +230,3 @@ If this is the initial conversation, start immediately with 1 specific guiding q
     })
   }
 })
-

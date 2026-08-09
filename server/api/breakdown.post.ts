@@ -11,11 +11,13 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
   const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
   
   console.log('[DEBUG] /api/breakdown: USE_OLLAMA from env:', process.env.USE_OLLAMA)
   console.log('[DEBUG] /api/breakdown: useOllama:', useOllama)
   console.log('[DEBUG] /api/breakdown: API key configured?', !!openaiApiKey)
+  console.log('[DEBUG] /api/breakdown: Base URL configured?', !!openaiBaseUrl)
   console.log('[DEBUG] /api/breakdown: Model:', useOllama ? ollamaModel : openaiModel)
   
   const body = await readBody(event)
@@ -43,7 +45,27 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
     })
   }
   
-  if (!useOllama && !openaiApiKey) {
+  const useMockLlm = process.env.USE_MOCK_LLM === 'true'
+  if (useMockLlm) {
+    return {
+      concepts: [
+        {
+          title: 'Define the outcome',
+          description: 'Clarify what success looks like and how you will measure it.'
+        },
+        {
+          title: 'Identify constraints',
+          description: 'List the main limits (time, budget, people, compliance) and decide tradeoffs.'
+        },
+        {
+          title: 'Plan delivery',
+          description: 'Break the work into milestones with owners, dependencies, and checkpoints.'
+        }
+      ]
+    }
+  }
+
+  if (!useOllama && !openaiApiKey && !openaiBaseUrl) {
     console.error('[DEBUG] /api/breakdown: ERROR - OpenAI API key is not configured and Ollama is not enabled')
     throw createError({
       statusCode: 500,
@@ -61,7 +83,8 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   if (!useOllama) {
     console.log('[DEBUG] /api/breakdown: Initializing OpenAI client')
     openai = new OpenAI({
-      apiKey: openaiApiKey
+      apiKey: openaiApiKey || 'local-dev',
+      baseURL: openaiBaseUrl || undefined
     })
   }
   console.log('[DEBUG] /api/breakdown: Using model:', model)
@@ -232,4 +255,3 @@ Format your response as a JSON array like this:
     })
   }
 })
-

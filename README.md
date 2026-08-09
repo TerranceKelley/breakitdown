@@ -17,7 +17,10 @@ A web application that helps you break down ideas into actionable concepts using
 ### Prerequisites
 
 - Node.js 18+ and npm
-- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+- One of:
+  - OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+  - An OpenAI-compatible endpoint (self-hosted / vLLM / litellm / etc.)
+  - Ollama (local)
 
 ### Installation
 
@@ -36,9 +39,31 @@ npm install
 cp .env.example .env
 ```
 
-4. Add your OpenAI API key to `.env`:
-```
+4. Configure your LLM in `.env` (choose one):
+
+OpenAI:
+```bash
 OPENAI_API_KEY=your-api-key-here
+OPENAI_MODEL=gpt-4o
+```
+
+OpenAI-compatible (self-hosted):
+```bash
+# Example:
+OPENAI_BASE_URL=http://localhost:8000/v1
+OPENAI_MODEL=gpt-4o-mini
+```
+
+Ollama (local):
+```bash
+USE_OLLAMA=true
+OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=gpt-oss:20b
+```
+
+Mock (no network; great for demos/tests):
+```bash
+USE_MOCK_LLM=true
 ```
 
 ### Development
@@ -50,6 +75,11 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+Optional smoke test (app must be running):
+```bash
+node scripts/smoke.mjs
+```
 
 ### Build
 

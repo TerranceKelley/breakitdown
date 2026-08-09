@@ -12,6 +12,8 @@ interface HealthResponse {
       enabled: boolean
       configured: boolean
       model?: string
+      baseUrl?: string
+      error?: string
     }
   }
 }
@@ -24,7 +26,9 @@ export default defineEventHandler(async (event): Promise<HealthResponse> => {
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
   const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
+  const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
+  const useMockLlm = process.env.USE_MOCK_LLM === 'true'
   
   const response: HealthResponse = {
     status: 'healthy',
@@ -76,18 +80,33 @@ export default defineEventHandler(async (event): Promise<HealthResponse> => {
   if (!useOllama) {
     response.services.openai = {
       enabled: true,
-      configured: !!openaiApiKey,
-      model: openaiModel
+      configured: !!openaiApiKey || !!openaiBaseUrl,
+      model: openaiModel,
+      baseUrl: openaiBaseUrl || undefined
     }
     
-    if (!openaiApiKey) {
+    if (!openaiApiKey && !openaiBaseUrl) {
       response.status = 'unhealthy'
-      response.services.openai.error = 'API key not configured'
+      response.services.openai.error = 'API key or OPENAI_BASE_URL not configured'
     }
   } else {
     response.services.openai = {
       enabled: false,
       configured: false
+    }
+  }
+
+  // Mock LLM overrides everything for local/dev testing
+  if (useMockLlm) {
+    response.status = 'degraded'
+    response.services.openai = {
+      enabled: false,
+      configured: false,
+      model: 'mock'
+    } as any
+    response.services.ollama = {
+      enabled: false,
+      reachable: false
     }
   }
   

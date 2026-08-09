@@ -29,6 +29,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // These are read from environment variables at runtime
     openaiApiKey: process.env.OPENAI_API_KEY || '',
+    // Optional: use an OpenAI-compatible endpoint (vLLM/litellm/self-hosted/etc.)
+    // Example: http://localhost:8000/v1
+    openaiBaseUrl: process.env.OPENAI_BASE_URL || '',
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o', // Default to GPT-4o (newer, faster, cheaper than gpt-4-turbo). Options: 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'
     useOllama: process.env.USE_OLLAMA || 'false', // Use Ollama instead of OpenAI (read as string, convert in handlers)
     ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434', // Ollama API URL
@@ -47,4 +50,3 @@ export default defineNuxtConfig({
     }
   }
 })
-
