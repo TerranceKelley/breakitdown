@@ -11,6 +11,9 @@
             <template v-if="userState.user">
               Logged in as {{ userState.user.displayName || userState.user.username }}
             </template>
+            <template v-else-if="isDemoMode">
+              Demo mode — no login
+            </template>
             <a
               v-else
               href="https://auth.kloudtastic.com/"
@@ -40,7 +43,17 @@
     <main class="container mx-auto px-4 py-8">
       <div v-if="!store.currentIdea" class="max-w-2xl mx-auto space-y-6">
         <div class="space-y-4">
-          <h2 class="text-2xl font-semibold">Start a New Idea</h2>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-2xl font-semibold">Start a New Idea</h2>
+            <button
+              type="button"
+              class="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
+              @click="loadExampleIdea"
+              title="Load an example idea"
+            >
+              Load example
+            </button>
+          </div>
           <div>
             <label class="block text-sm font-medium mb-2">Idea Name</label>
             <SpeechInput
@@ -269,6 +282,7 @@ const store = useIdeaStore()
 const ai = useAI()
 const tracker = useTokenTracker()
 const userState = useUser()
+const { isDemoMode, refresh: refreshHealth } = useHealth()
 
 const ideaName = ref('')
 const idea = ref('')
@@ -279,6 +293,25 @@ const newConceptDescription = ref('')
 const chatConceptId = ref<string | null>(null)
 const isStartingChat = ref<string | null>(null) // Track which concept is loading
 const showUsageSummary = ref(false)
+
+const exampleIdeas = [
+  {
+    name: 'AWS platform consolidation',
+    ideaName: 'AWS consolidation + security hardening',
+    idea: 'Migrate a multi-cloud product platform to AWS-only. Add CDN + WAF, tighten auth, migrate MongoDB Atlas to DocumentDB, and ship with a safe rollout plan.'
+  },
+  {
+    name: 'Self-hosted Prefect on EKS',
+    ideaName: 'Prefect on EKS',
+    idea: 'Build a production-ready Prefect stack on AWS EKS with Terraform + Helm, including PostgreSQL, Redis, ingress/TLS, and monitoring.'
+  }
+] as const
+
+const loadExampleIdea = () => {
+  const example = exampleIdeas[Math.floor(Math.random() * exampleIdeas.length)]
+  ideaName.value = example.ideaName
+  idea.value = example.idea
+}
 
 const isButtonDisabled = computed(() => {
   const ideaTrimmed = idea.value.trim()
@@ -303,6 +336,10 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  refreshHealth()
+})
 
 const handleInitialBreakdown = async () => {
   if (!idea.value.trim() || !ideaName.value.trim()) {

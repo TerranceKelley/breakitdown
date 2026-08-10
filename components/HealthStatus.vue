@@ -26,33 +26,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-
-interface HealthResponse {
-  status: 'healthy' | 'degraded' | 'unhealthy'
-  timestamp: string
-  services: {
-    mock?: {
-      enabled: boolean
-      model?: string
-    }
-    ollama?: {
-      enabled: boolean
-      reachable: boolean
-      model?: string
-      error?: string
-    }
-    openai?: {
-      enabled: boolean
-      configured: boolean
-      model?: string
-      error?: string
-    }
-  }
-}
+import { useHealth } from '~/composables/useHealth'
 
 const showStatus = ref(true)
-const healthStatus = ref<HealthResponse | null>(null)
 const checking = ref(true)
+const { health: healthStatus, refresh } = useHealth()
 
 const statusClass = computed(() => {
   if (!healthStatus.value) return 'bg-muted border-border text-muted-foreground'
@@ -86,12 +64,13 @@ const statusText = computed(() => {
   if (checking.value) return 'Checking AI connection...'
   if (!healthStatus.value) return 'Health check failed'
   
-  const ollama = healthStatus.value.services.ollama
-  const openai = healthStatus.value.services.openai
   const mock = healthStatus.value.services.mock
   if (mock?.enabled) {
     return 'Demo mode (mock LLM)'
   }
+
+  const ollama = healthStatus.value.services.ollama
+  const openai = healthStatus.value.services.openai
   
   if (ollama?.enabled) {
     if (ollama.reachable) {
@@ -123,15 +102,11 @@ const details = computed(() => {
 
 onMounted(async () => {
   try {
-    const response = await $fetch<HealthResponse>('/api/health')
-    healthStatus.value = response
+    if (!healthStatus.value) {
+      await refresh()
+    }
   } catch (error: any) {
     console.error('Health check failed:', error)
-    healthStatus.value = {
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      services: {}
-    }
   } finally {
     checking.value = false
     // Auto-hide after 10 seconds if healthy
