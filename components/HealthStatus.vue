@@ -31,6 +31,10 @@ interface HealthResponse {
   status: 'healthy' | 'degraded' | 'unhealthy'
   timestamp: string
   services: {
+    mock?: {
+      enabled: boolean
+      model?: string
+    }
     ollama?: {
       enabled: boolean
       reachable: boolean
@@ -84,6 +88,10 @@ const statusText = computed(() => {
   
   const ollama = healthStatus.value.services.ollama
   const openai = healthStatus.value.services.openai
+  const mock = healthStatus.value.services.mock
+  if (mock?.enabled) {
+    return 'Demo mode (mock LLM)'
+  }
   
   if (ollama?.enabled) {
     if (ollama.reachable) {

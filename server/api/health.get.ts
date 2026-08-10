@@ -2,6 +2,10 @@ interface HealthResponse {
   status: 'healthy' | 'degraded' | 'unhealthy'
   timestamp: string
   services: {
+    mock?: {
+      enabled: boolean
+      model: 'mock'
+    }
     ollama?: {
       enabled: boolean
       reachable: boolean
@@ -98,15 +102,21 @@ export default defineEventHandler(async (event): Promise<HealthResponse> => {
 
   // Mock LLM overrides everything for local/dev testing
   if (useMockLlm) {
-    response.status = 'degraded'
-    response.services.openai = {
-      enabled: false,
-      configured: false,
-      model: 'mock'
-    } as any
-    response.services.ollama = {
-      enabled: false,
-      reachable: false
+    response.status = 'healthy'
+    response.services = {
+      mock: {
+        enabled: true,
+        model: 'mock'
+      },
+      ollama: {
+        enabled: false,
+        reachable: false
+      },
+      openai: {
+        enabled: false,
+        configured: false,
+        model: 'mock'
+      }
     }
   }
   
