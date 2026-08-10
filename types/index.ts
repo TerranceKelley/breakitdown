@@ -49,7 +49,6 @@ export interface TokenUsage {
   totalTokens: number
   cost: number // in USD
   timestamp: number
-  operation: 'breakdown' | 'chat' | 'refine' | 'transcribe'
+  operation: 'breakdown' | 'chat' | 'refine' | 'transcribe' | 'synthesize'
   model: string
 }
-
