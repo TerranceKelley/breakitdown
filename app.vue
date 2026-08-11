@@ -148,38 +148,42 @@
         </div>
       </div>
 
-      <div v-else class="space-y-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 class="text-2xl font-semibold">{{ store.currentIdea?.name }}</h2>
-            <p class="text-muted-foreground">{{ store.currentIdea?.rootIdea }}</p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button
-              @click="addNewConcept"
-              class="px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
-            >
-              Add Concept
-            </button>
-            <button
-              @click="showGenerator = !showGenerator"
-              :class="[
-                'px-4 py-2 rounded transition-colors',
-                showGenerator
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-              ]"
-            >
-              {{ showGenerator ? 'Hide' : 'Generate Documents' }}
-            </button>
-            <button
-              @click="startNewIdea"
-              class="px-4 py-2 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
-            >
-              New Idea
-            </button>
-          </div>
-        </div>
+	      <div v-else class="space-y-8">
+	        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+	          <div>
+	            <h2 class="text-2xl font-semibold">{{ store.currentIdea?.name }}</h2>
+	            <p class="text-muted-foreground">{{ store.currentIdea?.rootIdea }}</p>
+	          </div>
+	          <div class="flex flex-wrap gap-2">
+	            <button
+	              @click="addNewConcept"
+	              :disabled="ai.isLoading.value"
+	              class="px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+	            >
+	              Add Concept
+	            </button>
+	            <button
+	              @click="showGenerator = !showGenerator"
+	              :disabled="ai.isLoading.value"
+	              :class="[
+	                'px-4 py-2 rounded transition-colors',
+	                showGenerator
+	                  ? 'bg-primary text-primary-foreground'
+	                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+	                ai.isLoading.value ? 'opacity-50 cursor-not-allowed' : ''
+	              ]"
+	            >
+	              {{ showGenerator ? 'Hide' : 'Generate Documents' }}
+	            </button>
+	            <button
+	              @click="startNewIdea"
+	              :disabled="ai.isLoading.value"
+	              class="px-4 py-2 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+	            >
+	              New Idea
+	            </button>
+	          </div>
+	        </div>
 
         <!-- Token Counter -->
         <TokenCounter
@@ -209,32 +213,59 @@
           </div>
         </div>
 
-        <div>
-          <div v-if="store.currentIdea && store.currentIdea.concepts.length > 0" class="mb-4 flex gap-2">
-            <button
-              @click="expandAllConcepts"
-              class="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
-            >
-              Expand All
-            </button>
-            <button
-              @click="collapseAllConcepts"
-              class="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
-            >
-              Collapse All
-            </button>
-          </div>
-          <ConceptTree
-            :concepts="store.currentIdea?.concepts || []"
-            :expanded-concepts="expandedConcepts"
-            :is-starting-chat="isStartingChat"
-            @update="handleConceptUpdate"
-            @delete="handleConceptDelete"
-            @break-down="handleConceptBreakDown"
-            @toggle-expand="handleToggleExpand"
-            @talk-about="handleTalkAbout"
-          />
-        </div>
+	        <div>
+	          <div
+	            v-if="store.currentIdea && store.currentIdea.concepts.length === 0"
+	            class="p-6 border border-border rounded-lg bg-muted/30"
+	          >
+	            <div class="text-center space-y-4">
+	              <div class="text-muted-foreground">
+	                No concepts yet. Break down your idea to get started.
+	              </div>
+	              <div class="flex justify-center">
+	                <BreakItDownButton
+	                  :disabled="!store.currentIdea?.rootIdea?.trim()"
+	                  :is-loading="ai.isLoading.value"
+	                  @click="handleBreakDownCurrentIdea"
+	                />
+	              </div>
+	              <div v-if="ai.isLoading.value" class="text-sm text-muted-foreground">
+	                <span>Thinking… {{ breakdownSeconds }}s</span>
+	                <span v-if="breakdownSeconds >= 10"> (Ollama can take 30–120s on larger models)</span>
+	              </div>
+	              <div v-if="ai.error.value" class="text-sm text-destructive">
+	                {{ ai.error.value }}
+	              </div>
+	            </div>
+	          </div>
+
+	          <template v-else>
+	            <div v-if="store.currentIdea && store.currentIdea.concepts.length > 0" class="mb-4 flex gap-2">
+	              <button
+	                @click="expandAllConcepts"
+	                class="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
+	              >
+	                Expand All
+	              </button>
+	              <button
+	                @click="collapseAllConcepts"
+	                class="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
+	              >
+	                Collapse All
+	              </button>
+	            </div>
+	            <ConceptTree
+	              :concepts="store.currentIdea?.concepts || []"
+	              :expanded-concepts="expandedConcepts"
+	              :is-starting-chat="isStartingChat"
+	              @update="handleConceptUpdate"
+	              @delete="handleConceptDelete"
+	              @break-down="handleConceptBreakDown"
+	              @toggle-expand="handleToggleExpand"
+	              @talk-about="handleTalkAbout"
+	            />
+	          </template>
+	        </div>
 
         <!-- Add Concept Modal -->
         <div v-if="showAddConcept" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -397,6 +428,13 @@ const handleInitialBreakdown = async () => {
   ideaName.value = ''
   idea.value = ''
   ideaMode.value = 'generic'
+}
+
+const handleBreakDownCurrentIdea = async () => {
+  if (!store.currentIdea) return
+  if (!store.currentIdea.rootIdea?.trim()) return
+  await store.breakDownIdea(store.currentIdea.rootIdea)
+  await store.saveCurrentIdea()
 }
 
 const loadIdea = async (id: string) => {
