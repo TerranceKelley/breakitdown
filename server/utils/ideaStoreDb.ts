@@ -1,6 +1,6 @@
 import type { Idea } from '~/types'
 import { initDb, isDbEnabled, query } from '~/server/utils/db'
-import * as fileStore from '~/server/utils/ideaStoreFile'
+import { fileIdeaStore } from '~/server/utils/ideaStoreFile'
 
 function rowToIdea(row: any): Idea {
   return {
@@ -16,7 +16,7 @@ function rowToIdea(row: any): Idea {
 }
 
 async function maybeMigrateFromFileStore(userId: string): Promise<void> {
-  const legacy = await fileStore.getByUserId(userId)
+  const legacy = await fileIdeaStore.getByUserId(userId)
   if (!legacy || legacy.length === 0) return
 
   for (const idea of legacy) {
@@ -25,7 +25,7 @@ async function maybeMigrateFromFileStore(userId: string): Promise<void> {
 }
 
 export async function getByUserId(userId: string): Promise<Idea[]> {
-  if (!isDbEnabled()) return fileStore.getByUserId(userId)
+  if (!isDbEnabled()) return fileIdeaStore.getByUserId(userId)
   await initDb()
 
   const result = await query(
@@ -52,7 +52,7 @@ export async function getByUserId(userId: string): Promise<Idea[]> {
 }
 
 export async function getById(userId: string, ideaId: string): Promise<Idea | undefined> {
-  if (!isDbEnabled()) return fileStore.getById(userId, ideaId)
+  if (!isDbEnabled()) return fileIdeaStore.getById(userId, ideaId)
   await initDb()
 
   const result = await query(
@@ -66,7 +66,7 @@ export async function getById(userId: string, ideaId: string): Promise<Idea | un
 }
 
 export async function save(userId: string, idea: Idea): Promise<void> {
-  if (!isDbEnabled()) return fileStore.save(userId, idea)
+  if (!isDbEnabled()) return fileIdeaStore.save(userId, idea)
   await initDb()
 
   const now = Date.now()
@@ -96,10 +96,9 @@ export async function save(userId: string, idea: Idea): Promise<void> {
 }
 
 export async function remove(userId: string, ideaId: string): Promise<boolean> {
-  if (!isDbEnabled()) return fileStore.remove(userId, ideaId)
+  if (!isDbEnabled()) return fileIdeaStore.remove(userId, ideaId)
   await initDb()
 
   const result = await query(`DELETE FROM ideas WHERE user_id = $1 AND id = $2`, [userId, ideaId])
   return (result.rowCount || 0) > 0
 }
-

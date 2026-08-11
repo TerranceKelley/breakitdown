@@ -9,7 +9,7 @@ async function getFilePath(userId: string): Promise<string> {
   return join(DATA_DIR, `${userId}.json`)
 }
 
-export async function getByUserId(userId: string): Promise<Idea[]> {
+async function getByUserId(userId: string): Promise<Idea[]> {
   const filePath = await getFilePath(userId)
   try {
     const raw = await readFile(filePath, 'utf-8')
@@ -20,12 +20,12 @@ export async function getByUserId(userId: string): Promise<Idea[]> {
   }
 }
 
-export async function getById(userId: string, ideaId: string): Promise<Idea | undefined> {
+async function getById(userId: string, ideaId: string): Promise<Idea | undefined> {
   const ideas = await getByUserId(userId)
   return ideas.find((i) => i.id === ideaId)
 }
 
-export async function save(userId: string, idea: Idea): Promise<void> {
+async function save(userId: string, idea: Idea): Promise<void> {
   const ideas = await getByUserId(userId)
   const index = ideas.findIndex((i) => i.id === idea.id)
   const ideaCopy: Idea = {
@@ -47,7 +47,7 @@ export async function save(userId: string, idea: Idea): Promise<void> {
   await writeFile(filePath, JSON.stringify(ideas, null, 2), 'utf-8')
 }
 
-export async function remove(userId: string, ideaId: string): Promise<boolean> {
+async function remove(userId: string, ideaId: string): Promise<boolean> {
   const ideas = await getByUserId(userId)
   const filtered = ideas.filter((i) => i.id !== ideaId)
   if (filtered.length === ideas.length) return false
@@ -56,3 +56,4 @@ export async function remove(userId: string, ideaId: string): Promise<boolean> {
   return true
 }
 
+export const fileIdeaStore = { getByUserId, getById, save, remove }
