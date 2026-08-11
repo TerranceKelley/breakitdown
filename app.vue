@@ -86,6 +86,10 @@
             :is-loading="ai.isLoading.value"
             @click="handleInitialBreakdown"
           />
+          <div v-if="ai.isLoading.value" class="text-sm text-muted-foreground">
+            <span>Thinking… {{ breakdownSeconds }}s</span>
+            <span v-if="breakdownSeconds >= 10"> (Ollama can take 30–120s on larger models)</span>
+          </div>
           <div v-if="ai.error.value" class="p-4 bg-destructive/10 border border-destructive rounded-lg text-destructive">
             {{ ai.error.value }}
           </div>
@@ -310,6 +314,8 @@ const newConceptDescription = ref('')
 const chatConceptId = ref<string | null>(null)
 const isStartingChat = ref<string | null>(null) // Track which concept is loading
 const showUsageSummary = ref(false)
+const breakdownSeconds = ref(0)
+let breakdownTimer: ReturnType<typeof setInterval> | null = null
 
 const exampleIdeas = [
   {
@@ -362,6 +368,22 @@ watch(
 onMounted(() => {
   refreshHealth()
 })
+
+watch(
+  () => ai.isLoading.value,
+  (loading) => {
+    if (loading) {
+      breakdownSeconds.value = 0
+      if (breakdownTimer) clearInterval(breakdownTimer)
+      breakdownTimer = setInterval(() => {
+        breakdownSeconds.value += 1
+      }, 1000)
+    } else {
+      if (breakdownTimer) clearInterval(breakdownTimer)
+      breakdownTimer = null
+    }
+  }
+)
 
 const handleInitialBreakdown = async () => {
   if (!idea.value.trim() || !ideaName.value.trim()) {

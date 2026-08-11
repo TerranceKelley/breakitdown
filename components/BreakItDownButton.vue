@@ -11,6 +11,7 @@
     ]"
     type="button"
     :aria-disabled="disabled || isLoading"
+    :aria-busy="isLoading ? 'true' : 'false'"
   >
     <span class="relative z-10 flex items-center gap-2">
       <svg
@@ -28,7 +29,27 @@
         <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
         <line x1="12" y1="22.08" x2="12" y2="12" />
       </svg>
-      <span v-else class="animate-spin">⟳</span>
+      <svg
+        v-else
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6 animate-spin"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
       {{ isLoading ? 'Breaking it down...' : 'Break It Down' }}
     </span>
     
@@ -88,4 +109,3 @@ const handleClick = () => {
   animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 </style>
-
