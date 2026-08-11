@@ -24,7 +24,7 @@ async function maybeMigrateFromFileStore(userId: string): Promise<void> {
   }
 }
 
-export async function getByUserId(userId: string): Promise<Idea[]> {
+async function getByUserId(userId: string): Promise<Idea[]> {
   if (!isDbEnabled()) return fileIdeaStore.getByUserId(userId)
   await initDb()
 
@@ -51,7 +51,7 @@ export async function getByUserId(userId: string): Promise<Idea[]> {
   return result.rows.map(rowToIdea)
 }
 
-export async function getById(userId: string, ideaId: string): Promise<Idea | undefined> {
+async function getById(userId: string, ideaId: string): Promise<Idea | undefined> {
   if (!isDbEnabled()) return fileIdeaStore.getById(userId, ideaId)
   await initDb()
 
@@ -65,7 +65,7 @@ export async function getById(userId: string, ideaId: string): Promise<Idea | un
   return row ? rowToIdea(row) : undefined
 }
 
-export async function save(userId: string, idea: Idea): Promise<void> {
+async function save(userId: string, idea: Idea): Promise<void> {
   if (!isDbEnabled()) return fileIdeaStore.save(userId, idea)
   await initDb()
 
@@ -95,10 +95,12 @@ export async function save(userId: string, idea: Idea): Promise<void> {
   )
 }
 
-export async function remove(userId: string, ideaId: string): Promise<boolean> {
+async function remove(userId: string, ideaId: string): Promise<boolean> {
   if (!isDbEnabled()) return fileIdeaStore.remove(userId, ideaId)
   await initDb()
 
   const result = await query(`DELETE FROM ideas WHERE user_id = $1 AND id = $2`, [userId, ideaId])
   return (result.rowCount || 0) > 0
 }
+
+export const dbIdeaStore = { getByUserId, getById, save, remove }

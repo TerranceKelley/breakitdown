@@ -43,6 +43,7 @@ services:
       # Persistence / billing
       - DATABASE_URL=${DATABASE_URL:-postgresql://breakitdown:breakitdown@db:5432/breakitdown}
       - TRIAL_DAYS=${TRIAL_DAYS:-14}
+      - ALLOW_ANON_AI=${ALLOW_ANON_AI:-true}
       # Node environment
       - NODE_ENV=production
       - NITRO_PORT=3000

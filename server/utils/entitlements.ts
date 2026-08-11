@@ -101,8 +101,19 @@ export async function requireAiAccess(event: any): Promise<Entitlements> {
     }
   }
 
+  const allowAnonAi = process.env.ALLOW_ANON_AI !== 'false'
   const user = event.context.user
   if (!user) {
+    if (allowAnonAi) {
+      const now = Date.now()
+      return {
+        userId: 'anon',
+        trialStartedAt: now,
+        trialEndsAt: now + 1000 * 60 * 60 * 24 * 365 * 100,
+        status: 'active',
+        plan: 'anon'
+      }
+    }
     throw createError({
       statusCode: 401,
       statusMessage: 'Not authenticated',

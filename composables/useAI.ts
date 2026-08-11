@@ -5,6 +5,16 @@ export const useAI = () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
+  const getErrorMessage = (err: any): string => {
+    return (
+      err?.data?.message ||
+      err?.data?.statusMessage ||
+      err?.statusMessage ||
+      err?.message ||
+      'Failed to break down idea'
+    )
+  }
+
   const breakDownIdea = async (idea: string | BreakdownRequest): Promise<BreakdownResponse | null> => {
     isLoading.value = true
     error.value = null
@@ -37,7 +47,7 @@ export const useAI = () => {
 
       return response
     } catch (err: any) {
-      error.value = err.message || 'Failed to break down idea'
+      error.value = getErrorMessage(err)
       console.error('AI breakdown error:', err)
       return null
     } finally {
@@ -51,4 +61,3 @@ export const useAI = () => {
     error: readonly(error)
   }
 }
-

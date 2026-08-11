@@ -27,6 +27,16 @@ export const useChat = () => {
   const error = useState<string | null>('chat-error', () => null)
   const conceptContext = useState<ConceptContext | null>('chat-context', () => null)
 
+  const getErrorMessage = (err: any): string => {
+    return (
+      err?.data?.message ||
+      err?.data?.statusMessage ||
+      err?.statusMessage ||
+      err?.message ||
+      'Chat request failed'
+    )
+  }
+
   const startConversation = async (context: ConceptContext) => {
     conceptContext.value = context
     messages.value = []
@@ -63,7 +73,7 @@ export const useChat = () => {
         error.value = 'Invalid response from server'
       }
     } catch (err: any) {
-      error.value = err.message || 'Failed to start conversation'
+      error.value = getErrorMessage(err) || 'Failed to start conversation'
       console.error('[useChat] Chat error:', err)
     } finally {
       isLoading.value = false
@@ -110,7 +120,7 @@ export const useChat = () => {
         return { usage: response.usage }
       }
     } catch (err: any) {
-      error.value = err.message || 'Failed to send message'
+      error.value = getErrorMessage(err) || 'Failed to send message'
       console.error('Chat error:', err)
       // Remove the user message if sending failed
       messages.value.pop()
