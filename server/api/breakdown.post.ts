@@ -12,7 +12,9 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   // Read environment variables directly (runtime config may not pick them up correctly)
   const useOllama = process.env.USE_OLLAMA === 'true'
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
-  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
+  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'qwen2.5:7b'
+  const ollamaTimeoutMs = Number(process.env.OLLAMA_TIMEOUT_MS || config.ollamaTimeoutMs || 60000)
+  const ollamaNumPredict = Number(process.env.OLLAMA_NUM_PREDICT || config.ollamaNumPredict || 400)
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
   const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
@@ -127,6 +129,7 @@ Format your response as a JSON array like this:
       
       const response = await $fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',
+        timeout: Number.isFinite(ollamaTimeoutMs) ? ollamaTimeoutMs : 60000,
         body: {
           model,
           messages: [
@@ -141,7 +144,7 @@ Format your response as a JSON array like this:
           ],
           options: {
             temperature: 0.7,
-            num_predict: 1000
+            num_predict: Number.isFinite(ollamaNumPredict) ? ollamaNumPredict : 400
           },
           stream: false
         }

@@ -28,7 +28,7 @@ export default defineEventHandler(async (event): Promise<HealthResponse> => {
   // Read environment variables directly
   const useOllama = process.env.USE_OLLAMA === 'true'
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
-  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
+  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'qwen2.5:7b'
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
   const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'

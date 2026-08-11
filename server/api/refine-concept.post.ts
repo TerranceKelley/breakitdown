@@ -30,7 +30,9 @@ export default defineEventHandler(async (event) => {
   // Read environment variables directly (runtime config may not pick them up correctly)
   const useOllama = process.env.USE_OLLAMA === 'true'
   const ollamaUrl = process.env.OLLAMA_URL || config.ollamaUrl || 'http://localhost:11434'
-  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'gpt-oss:20b'
+  const ollamaModel = process.env.OLLAMA_MODEL || config.ollamaModel || 'qwen2.5:7b'
+  const ollamaTimeoutMs = Number(process.env.OLLAMA_TIMEOUT_MS || (config as any).ollamaTimeoutMs || 60000)
+  const ollamaNumPredict = Number(process.env.OLLAMA_NUM_PREDICT || (config as any).ollamaNumPredict || 250)
   const openaiApiKey = process.env.OPENAI_API_KEY || config.openaiApiKey || ''
   const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl || ''
   const openaiModel = process.env.OPENAI_MODEL || config.openaiModel || 'gpt-4o'
@@ -120,6 +122,7 @@ Return ONLY a JSON object with "title" and "description" fields. No other text.`
       
       const response = await $fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',
+        timeout: Number.isFinite(ollamaTimeoutMs) ? ollamaTimeoutMs : 60000,
         body: {
           model,
           messages: messages.map(msg => ({
@@ -128,7 +131,7 @@ Return ONLY a JSON object with "title" and "description" fields. No other text.`
           })),
           options: {
             temperature: 0.7,
-            num_predict: 500
+            num_predict: Number.isFinite(ollamaNumPredict) ? ollamaNumPredict : 250
           },
           stream: false,
           format: 'json'

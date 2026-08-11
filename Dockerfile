@@ -60,6 +60,6 @@ ENV NITRO_PORT=3000
 ENV NITRO_HOST=0.0.0.0
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget -qO- --timeout=5 http://localhost:3000/api/health | grep -q '"status":"healthy"' || exit 1
+  CMD wget -qO- --timeout=5 http://127.0.0.1:3000/api/health | grep -q '"status":"healthy"' || exit 1
 
 CMD ["node", ".output/server/index.mjs"]

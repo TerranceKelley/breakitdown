@@ -35,10 +35,13 @@ export default defineNuxtConfig({
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o', // Default to GPT-4o (newer, faster, cheaper than gpt-4-turbo). Options: 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'
     useOllama: process.env.USE_OLLAMA || 'false', // Use Ollama instead of OpenAI (read as string, convert in handlers)
     ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434', // Ollama API URL
-    ollamaModel: process.env.OLLAMA_MODEL || 'gpt-oss:20b', // Ollama model name
+    // Prefer a smaller default model for responsiveness; override via OLLAMA_MODEL.
+    ollamaModel: process.env.OLLAMA_MODEL || 'qwen2.5:7b', // Ollama model name
     whisperUrl: process.env.WHISPER_URL || 'http://localhost:9000', // Local Whisper API URL
     useLocalWhisper: process.env.USE_LOCAL_WHISPER || 'false', // Use local Whisper instead of OpenAI
     ttsUrl: process.env.TTS_URL || 'http://localhost:9001', // Local TTS API URL
+    ollamaTimeoutMs: process.env.OLLAMA_TIMEOUT_MS || '60000',
+    ollamaNumPredict: process.env.OLLAMA_NUM_PREDICT || '400',
     public: {
       appName: 'Breakitdown'
     }
