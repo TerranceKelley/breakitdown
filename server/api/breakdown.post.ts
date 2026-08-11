@@ -2,9 +2,11 @@ import OpenAI from 'openai'
 import type { BreakdownResponse, BreakdownRequest } from '~/types'
 import { getModeSchema } from '~/schemas'
 import { breakdownRequestToToon } from '~/utils/toon'
+import { requireAiAccess } from '~/server/utils/entitlements'
 
 export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
   console.log('[DEBUG] /api/breakdown: Request received')
+  await requireAiAccess(event)
   const config = useRuntimeConfig(event)
   
   // Read environment variables directly (runtime config may not pick them up correctly)

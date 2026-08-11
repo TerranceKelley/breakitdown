@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type { BreakdownRequest } from '~/types'
 import { breakdownRequestToToon } from '~/utils/toon'
+import { requireAiAccess } from '~/server/utils/entitlements'
 
 interface RefineConceptRequest {
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
@@ -23,6 +24,7 @@ interface RefineConceptRequest {
 }
 
 export default defineEventHandler(async (event) => {
+  await requireAiAccess(event)
   const config = useRuntimeConfig(event)
   
   // Read environment variables directly (runtime config may not pick them up correctly)

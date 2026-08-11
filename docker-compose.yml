@@ -1,6 +1,19 @@
 # Build context must be the parent directory containing both breakitdown/ and authme/.
 # Run from this directory (breakitdown): docker compose up -d --build
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: breakitdown-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-breakitdown}
+      - POSTGRES_USER=${POSTGRES_USER:-breakitdown}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-breakitdown}
+    volumes:
+      - breakitdown-pg:/var/lib/postgresql/data
+    networks:
+      - proxy
+    restart: unless-stopped
+
   breakitdown:
     build:
       context: ..
@@ -27,6 +40,9 @@ services:
       - DEV_USER=${DEV_USER:-}
       - DEV_EMAIL=${DEV_EMAIL:-}
       - DEV_NAME=${DEV_NAME:-}
+      # Persistence / billing
+      - DATABASE_URL=${DATABASE_URL:-postgresql://breakitdown:breakitdown@db:5432/breakitdown}
+      - TRIAL_DAYS=${TRIAL_DAYS:-14}
       # Node environment
       - NODE_ENV=production
       - NITRO_PORT=3000
@@ -39,6 +55,7 @@ services:
 
 volumes:
   breakitdown-data:
+  breakitdown-pg:
 
 networks:
   proxy:

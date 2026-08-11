@@ -1,6 +1,8 @@
 import OpenAI from 'openai'
+import { requireAiAccess } from '~/server/utils/entitlements'
 
 export default defineEventHandler(async (event) => {
+  await requireAiAccess(event)
   // Read environment variables directly (runtime config may not pick them up correctly)
   const useLocalWhisper = process.env.USE_LOCAL_WHISPER === 'true'
   const whisperUrl = process.env.WHISPER_URL || 'http://localhost:9000'

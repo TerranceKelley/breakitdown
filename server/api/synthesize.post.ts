@@ -1,4 +1,7 @@
+import { requireAiAccess } from '~/server/utils/entitlements'
+
 export default defineEventHandler(async (event) => {
+  await requireAiAccess(event)
   // Read environment variables directly
   const ttsUrl = process.env.TTS_URL || 'http://localhost:9001'
 

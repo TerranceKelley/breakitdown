@@ -91,6 +91,18 @@ OLLAMA_MODEL=gpt-oss:20b
 USE_MOCK_LLM=true
 ```
 
+**Persistence + Trials (Postgres)**
+
+Breakitdown can store ideas in Postgres (recommended for auth/trials and multi-device access). If `DATABASE_URL` is unset, the server falls back to file storage under `/app/data`.
+
+```env
+# If using the included `db` service in docker-compose.yml:
+DATABASE_URL=postgresql://breakitdown:breakitdown@db:5432/breakitdown
+
+# Trial length in days (used when DATABASE_URL is set)
+TRIAL_DAYS=14
+```
+
 ### 3. Build and Run with Docker Compose
 
 ```bash
