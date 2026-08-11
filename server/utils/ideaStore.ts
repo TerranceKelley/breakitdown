@@ -32,6 +32,7 @@ export async function save(userId: string, idea: Idea): Promise<void> {
     id: idea.id,
     name: idea.name,
     rootIdea: idea.rootIdea,
+    mode: idea.mode ?? 'generic',
     concepts: JSON.parse(JSON.stringify(idea.concepts || [])),
     createdAt: idea.createdAt ?? Date.now(),
     updatedAt: Date.now(),

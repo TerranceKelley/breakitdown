@@ -109,6 +109,7 @@ const generateMarkdown = () => {
     try {
       let content = `# ${props.idea!.name}\n\n`
       content += `**Root Idea:** ${props.idea!.rootIdea}\n\n`
+      content += `**Mode:** ${props.idea!.mode || 'generic'}\n\n`
       content += `## Concepts\n\n`
       content += flattenConcepts(props.idea!.concepts)
       content += `\n---\n\n`
@@ -137,6 +138,7 @@ const generateJSON = () => {
       const exportData = {
         name: props.idea!.name,
         rootIdea: props.idea!.rootIdea,
+        mode: props.idea!.mode || 'generic',
         concepts: props.idea!.concepts,
         createdAt: new Date(props.idea!.createdAt).toISOString(),
         updatedAt: new Date(props.idea!.updatedAt).toISOString()
@@ -165,6 +167,7 @@ const generateYAML = () => {
       const exportData = {
         name: props.idea!.name,
         rootIdea: props.idea!.rootIdea,
+        mode: props.idea!.mode || 'generic',
         concepts: props.idea!.concepts,
         createdAt: new Date(props.idea!.createdAt).toISOString(),
         updatedAt: new Date(props.idea!.updatedAt).toISOString()
@@ -227,4 +230,3 @@ const clearGenerated = () => {
   currentFormat.value = 'markdown'
 }
 </script>
-

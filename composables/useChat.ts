@@ -13,6 +13,10 @@ interface ConceptContext {
     rootIdea?: string
     parentChain?: Array<{ title: string; description: string }>
     depth?: number
+    schemaHint?: {
+      mode?: string
+      missingLeafFields?: string[]
+    }
   }
 }
 
@@ -132,4 +136,3 @@ export const useChat = () => {
     clearChat
   }
 }
-

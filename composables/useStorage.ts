@@ -64,6 +64,7 @@ function useStorageBackend() {
           method: 'POST',
           body: {
             ...idea,
+            mode: idea.mode || 'generic',
             concepts: JSON.parse(JSON.stringify(idea.concepts)),
             tokenUsage: idea.tokenUsage ? JSON.parse(JSON.stringify(idea.tokenUsage)) : []
           }
@@ -76,6 +77,7 @@ function useStorageBackend() {
         id: idea.id,
         name: idea.name,
         rootIdea: idea.rootIdea,
+        mode: idea.mode || 'generic',
         concepts: JSON.parse(JSON.stringify(idea.concepts)),
         createdAt: idea.createdAt,
         updatedAt: Date.now(),
@@ -128,6 +130,7 @@ const migrateOldProjectsStore = async (database: IDBPDatabase) => {
         id: legacyIdea.id || crypto.randomUUID(),
         name: legacyIdea.name || 'Untitled Idea',
         rootIdea: legacyIdea.rootIdea || '',
+        mode: legacyIdea.mode || 'generic',
         concepts: legacyIdea.concepts || [],
         createdAt: legacyIdea.createdAt || Date.now(),
         updatedAt: Date.now(),
@@ -176,6 +179,9 @@ export const useStorage = () => {
     }
     if (!idea.createdAt) {
       idea.createdAt = Date.now()
+    }
+    if (!idea.mode) {
+      idea.mode = 'generic'
     }
     idea.updatedAt = Date.now()
     return idea

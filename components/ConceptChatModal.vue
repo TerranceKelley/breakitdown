@@ -170,6 +170,10 @@ const props = defineProps<{
     rootIdea?: string
     parentChain?: Array<{ title: string; description: string }>
     depth?: number
+    schemaHint?: {
+      mode?: string
+      missingLeafFields?: string[]
+    }
   }
 }>()
 
@@ -349,4 +353,3 @@ const closeModal = () => {
   emit('close')
 }
 </script>
-

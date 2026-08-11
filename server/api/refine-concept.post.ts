@@ -14,6 +14,10 @@ interface RefineConceptRequest {
       rootIdea?: string
       parentChain?: Array<{ title: string; description: string }>
       depth?: number
+      schemaHint?: {
+        mode?: string
+        missingLeafFields?: string[]
+      }
     }
   }
 }

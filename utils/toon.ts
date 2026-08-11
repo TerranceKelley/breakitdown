@@ -88,6 +88,10 @@ export function breakdownRequestToToon(request: {
     rootIdea?: string
     parentChain?: Array<{ title: string; description: string }>
     depth?: number
+    schemaHint?: {
+      mode?: string
+      missingLeafFields?: string[]
+    }
   }
 }): string {
   let result = ''
@@ -101,11 +105,19 @@ export function breakdownRequestToToon(request: {
     if (request.context.ideaName) contextObj.ideaName = request.context.ideaName
     if (request.context.rootIdea) contextObj.rootIdea = request.context.rootIdea
     if (request.context.depth !== undefined) contextObj.depth = request.context.depth
+    if (request.context.schemaHint?.mode) contextObj.mode = request.context.schemaHint.mode
     
     if (Object.keys(contextObj).length > 0) {
       result += objectToToon('context', contextObj)
     }
     
+    if (request.context.schemaHint?.missingLeafFields && request.context.schemaHint.missingLeafFields.length > 0) {
+      result += arrayToToon(
+        'missingLeafFields',
+        request.context.schemaHint.missingLeafFields.map((id) => ({ id }))
+      )
+    }
+
     // Convert parent chain if present
     if (request.context.parentChain && request.context.parentChain.length > 0) {
       result += arrayToToon('parentChain', request.context.parentChain)
@@ -194,4 +206,3 @@ function convertConceptsToToon(concepts: Array<{
   
   return result
 }
-

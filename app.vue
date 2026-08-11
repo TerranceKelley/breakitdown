@@ -54,19 +54,33 @@
               Load example
             </button>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-2">Idea Name</label>
-            <SpeechInput
-              v-model="ideaName"
-              type="text"
-              placeholder="My Awesome Idea"
-              input-class="w-full p-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-2">Your Idea</label>
-            <IdeaInput v-model="idea" placeholder="Type or speak your idea here..." />
-          </div>
+	          <div>
+	            <label class="block text-sm font-medium mb-2">Idea Name</label>
+	            <SpeechInput
+	              v-model="ideaName"
+	              type="text"
+	              placeholder="My Awesome Idea"
+	              input-class="w-full p-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+	            />
+	          </div>
+	          <div>
+	            <label class="block text-sm font-medium mb-2">End Result Mode</label>
+	            <select
+	              v-model="ideaMode"
+	              class="w-full p-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+	            >
+	              <option v-for="mode in modeOptions" :key="mode.id" :value="mode.id">
+	                {{ mode.label }}
+	              </option>
+	            </select>
+	            <p class="mt-1 text-xs text-muted-foreground">
+	              {{ MODE_SCHEMAS[ideaMode]?.description }}
+	            </p>
+	          </div>
+	          <div>
+	            <label class="block text-sm font-medium mb-2">Your Idea</label>
+	            <IdeaInput v-model="idea" placeholder="Type or speak your idea here..." />
+	          </div>
           <BreakItDownButton
             :disabled="isButtonDisabled"
             :is-loading="ai.isLoading.value"
@@ -278,6 +292,8 @@
 </template>
 
 <script setup lang="ts">
+import { MODE_SCHEMAS, getMissingLeafFields } from '~/schemas'
+
 const store = useIdeaStore()
 const ai = useAI()
 const tracker = useTokenTracker()
@@ -286,6 +302,7 @@ const { isDemoMode, refresh: refreshHealth } = useHealth()
 
 const ideaName = ref('')
 const idea = ref('')
+const ideaMode = ref<keyof typeof MODE_SCHEMAS>('generic')
 const showGenerator = ref(false)
 const showAddConcept = ref(false)
 const newConceptTitle = ref('')
@@ -298,19 +315,24 @@ const exampleIdeas = [
   {
     name: 'AWS platform consolidation',
     ideaName: 'AWS consolidation + security hardening',
-    idea: 'Migrate a multi-cloud product platform to AWS-only. Add CDN + WAF, tighten auth, migrate MongoDB Atlas to DocumentDB, and ship with a safe rollout plan.'
+    idea: 'Migrate a multi-cloud product platform to AWS-only. Add CDN + WAF, tighten auth, migrate MongoDB Atlas to DocumentDB, and ship with a safe rollout plan.',
+    mode: 'project_plan'
   },
   {
     name: 'Self-hosted Prefect on EKS',
     ideaName: 'Prefect on EKS',
-    idea: 'Build a production-ready Prefect stack on AWS EKS with Terraform + Helm, including PostgreSQL, Redis, ingress/TLS, and monitoring.'
+    idea: 'Build a production-ready Prefect stack on AWS EKS with Terraform + Helm, including PostgreSQL, Redis, ingress/TLS, and monitoring.',
+    mode: 'project_plan'
   }
 ] as const
+
+const modeOptions = computed(() => Object.values(MODE_SCHEMAS))
 
 const loadExampleIdea = () => {
   const example = exampleIdeas[Math.floor(Math.random() * exampleIdeas.length)]
   ideaName.value = example.ideaName
   idea.value = example.idea
+  ideaMode.value = example.mode
 }
 
 const isButtonDisabled = computed(() => {
@@ -346,12 +368,13 @@ const handleInitialBreakdown = async () => {
     return
   }
 
-  const ideaObj = store.createIdea(ideaName.value, idea.value)
+  const ideaObj = store.createIdea(ideaName.value, idea.value, ideaMode.value)
   await store.breakDownIdea(idea.value)
   await store.saveCurrentIdea()
 
   ideaName.value = ''
   idea.value = ''
+  ideaMode.value = 'generic'
 }
 
 const loadIdea = async (id: string) => {
@@ -595,11 +618,18 @@ const getConceptContext = (conceptId: string) => {
     ? store.getConceptDepth(conceptId) 
     : undefined
 
+  const mode = store.currentIdea.mode || 'generic'
+  const missingLeafFields = getMissingLeafFields(concept, mode)
+
   return {
     ideaName: store.currentIdea.name,
     rootIdea: store.currentIdea.rootIdea,
     parentChain: parentChain.length > 0 ? parentChain : undefined,
-    depth
+    depth,
+    schemaHint: {
+      mode,
+      missingLeafFields: missingLeafFields.length > 0 ? missingLeafFields : undefined
+    }
   }
 }
 </script>

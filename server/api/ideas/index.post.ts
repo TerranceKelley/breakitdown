@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
     id: body.id,
     name: body.name,
     rootIdea: body.rootIdea ?? '',
+    mode: body.mode ?? 'generic',
     concepts: body.concepts,
     createdAt: body.createdAt ?? Date.now(),
     updatedAt: Date.now(),

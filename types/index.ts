@@ -1,3 +1,39 @@
+export type IdeaMode =
+  | 'generic'
+  | 'project_plan'
+  | 'outline'
+  | 'prompt_pack'
+  | 'training'
+  | 'book'
+  | 'app'
+
+export type ConceptChunkType =
+  | 'outcome'
+  | 'step'
+  | 'deliverable'
+  | 'decision'
+  | 'risk'
+  | 'example'
+  | 'definition'
+  | 'resource'
+
+export interface ConceptRefinement {
+  /** Schema-driven fields (keyed by schema field id). */
+  fields?: Record<string, string>
+  /** A short conversational summary of what we know and what's next. */
+  summary?: string
+  /** Open questions we still want to answer before breaking down further. */
+  openQuestions?: string[]
+  /** Freeform notes/assumptions captured during "Talk about it". */
+  notes?: string[]
+  updatedAt?: number
+}
+
+export interface SchemaHint {
+  mode?: IdeaMode
+  missingLeafFields?: string[]
+}
+
 export interface Concept {
   id: string
   title: string
@@ -5,6 +41,8 @@ export interface Concept {
   completed: boolean
   children: Concept[]
   parentId?: string
+  chunkType?: ConceptChunkType
+  refinement?: ConceptRefinement
   createdAt: number
   updatedAt: number
 }
@@ -13,6 +51,7 @@ export interface Idea {
   id: string
   name: string
   rootIdea: string
+  mode?: IdeaMode
   concepts: Concept[]
   createdAt: number
   updatedAt: number
@@ -29,6 +68,7 @@ export interface BreakdownRequest {
     rootIdea?: string
     parentChain?: Array<{ title: string; description: string }>
     depth?: number
+    schemaHint?: SchemaHint
   }
 }
 

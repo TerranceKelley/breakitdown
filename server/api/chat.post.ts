@@ -14,6 +14,10 @@ interface ChatRequest {
       rootIdea?: string
       parentChain?: Array<{ title: string; description: string }>
       depth?: number
+      schemaHint?: {
+        mode?: string
+        missingLeafFields?: string[]
+      }
     }
   }
   isInitialMessage?: boolean
@@ -96,11 +100,19 @@ export default defineEventHandler(async (event) => {
     }
     const toonData = breakdownRequestToToon(breakdownRequest)
 
+    const schemaHint = body.conceptContext.context?.schemaHint
+    const modeLine = schemaHint?.mode ? `\nMODE: ${schemaHint.mode}` : ''
+    const missingLine =
+      schemaHint?.missingLeafFields && schemaHint.missingLeafFields.length > 0
+        ? `\nMISSING LEAF FIELDS (focus your next question on ONE of these): ${schemaHint.missingLeafFields.join(', ')}`
+        : ''
+
     // System prompt that explains the AI's role
     const systemPrompt = `You are a helpful assistant that helps refine and improve a specific concept. Your goal is to help the user clarify, expand, and improve THIS PARTICULAR CONCEPT before they break it down into sub-concepts.
 
 CONCEPT TO REFINE (TOON format):
 ${toonData}
+${modeLine}${missingLine}
 
 IMPORTANT: Focus ONLY on the specific concept being discussed. All your questions and suggestions should be directly related to:
 - The concept's title: "${body.conceptContext.concept.title}"
@@ -108,7 +120,8 @@ IMPORTANT: Focus ONLY on the specific concept being discussed. All your question
 - How this concept fits within its context (parent concepts, root idea, depth in hierarchy)
 
 Your role:
-- Ask 1 thoughtful, guiding question about THIS CONCEPT to help refine and improve it
+- Be conversational (like a friend who asks relevant questions)
+- Start with a brief reflection (1 short sentence) to confirm understanding, then ask 1 thoughtful, guiding question about THIS CONCEPT
 - Only ask 2 questions if they work together to clarify one aspect better (e.g., a main question with a follow-up clarification)
 - Questions should be directly related to the concept's title and description
 - Consider the context (parent chain, root idea, depth) when framing questions

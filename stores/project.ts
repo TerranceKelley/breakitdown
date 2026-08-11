@@ -19,11 +19,12 @@ export const useIdeaStore = defineStore('idea', () => {
     return saveQueue
   }
 
-  const createIdea = (name: string, rootIdea: string): Idea => {
+  const createIdea = (name: string, rootIdea: string, mode: Idea['mode'] = 'generic'): Idea => {
     const idea: Idea = {
       id: crypto.randomUUID(),
       name,
       rootIdea,
+      mode: mode || 'generic',
       concepts: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -346,7 +347,10 @@ export const useIdeaStore = defineStore('idea', () => {
             title: c.title,
             description: c.description
           })) : undefined,
-          depth: depth
+          depth: depth,
+          schemaHint: {
+            mode: currentIdea.value.mode || 'generic'
+          }
         }
       }
       
@@ -489,7 +493,10 @@ export const useIdeaStore = defineStore('idea', () => {
       context: {
         ideaName: currentIdea.value.name,
         rootIdea: currentIdea.value.rootIdea,
-        depth: 0
+        depth: 0,
+        schemaHint: {
+          mode: currentIdea.value.mode || 'generic'
+        }
       }
     }
 

@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import type { BreakdownResponse, BreakdownRequest } from '~/types'
+import { getModeSchema } from '~/schemas'
 import { breakdownRequestToToon } from '~/utils/toon'
 
 export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
@@ -94,9 +95,15 @@ export default defineEventHandler(async (event): Promise<BreakdownResponse> => {
     // Convert request to TOON format for efficient token usage
     const toonData = breakdownRequestToToon(request)
 
+    const mode = request.context?.schemaHint?.mode
+    const modeSchema = getModeSchema((mode as any) || 'generic')
+
     const prompt = `Break down the following concept into 3-7 high-level sub-concepts. Each sub-concept should have a clear title and a brief description (1-2 sentences).
 
 Use the provided context (in TOON format) to ensure the breakdown is relevant and appropriate. The sub-concepts should be components or aspects of the concept being broken down, fitting within the overall idea context.
+
+MODE: ${modeSchema.label} — ${modeSchema.description}
+Preferred chunk types: ${modeSchema.defaultChunkTypes.join(', ')}
 
 REQUEST DATA (TOON format):
 ${toonData}
